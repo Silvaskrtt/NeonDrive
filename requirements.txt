@@ -29,3 +29,4 @@ python-dotenv>=1.0
 # ============================
 django-crispy-forms>=2.1
 crispy-bootstrap5>=2024.2
+Pillow>=12.1.1

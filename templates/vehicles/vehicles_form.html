@@ -25,7 +25,7 @@
                         {% if form.instance.pk %}Editar Veículo{% else %}Novo Veículo{% endif %}
                     </h2>
 
-                    <form method="post" class="space-y-6">
+                    <form method="post" enctype="multipart/form-data" class="space-y-6">
                         {% csrf_token %}
                         
                         {% if form.non_field_errors %}

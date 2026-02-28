@@ -7,6 +7,7 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from .models import Vehicle
 from django.http import JsonResponse
+from .forms import VehicleForm
 
 # ============================================
 # MIXIN PERSONALIZADO PARA ROLE
@@ -50,7 +51,7 @@ class VehicleList(LoginRequiredMixin, ListView):
         queryset = super().get_queryset()
         search = self.request.GET.get('search')
         if search:
-            queryset = queryset.filter(name__icontains=search)
+            queryset = queryset.filter(mark__icontains=search)
         return queryset
     
     def get_context_data(self, **kwargs):
@@ -64,7 +65,7 @@ class VehicleCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     - Permissions: veiculos.add_vehicles
     """
     model = Vehicle
-    fields = ['mark', 'model', 'year', 'car_plate', 'color', 'value', 'status'] 
+    form_class = VehicleForm
     template_name = 'vehicles/vehicles_form.html'
     success_url = reverse_lazy('vehicles:list')
     permission_required = 'vehicles.add_vehicle'
@@ -81,7 +82,7 @@ class VehicleUpdate(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     - Permissions: vehicles.change_vehicle
     """
     model = Vehicle
-    fields = ['mark', 'model', 'year', 'car_plate', 'color', 'value', 'status'] 
+    form_class = VehicleForm
     template_name = 'vehicles/vehicles_form.html'
     success_url = reverse_lazy('vehicles:list')
     permission_required = 'vehicles.change_vehicle'
