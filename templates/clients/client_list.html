@@ -1,77 +1,106 @@
-<!-- templates/clients/client_list.html -->
+{% extends "base.html" %}
+{% load static %}
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Clientes</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="#">NeonDrive</a>
-            <div class="navbar-nav ms-auto">
-                <span class="nav-text text-white me-3">
-                    {{ user.username }} ({{ user.profile.role }})
-                </span>
-                <a class="nav-link" href="{% url 'account_logout' %}">Sair</a>
-            </div>
-        </div>
-    </nav>
+{% block title %}Clientes - AutoNex{% endblock %}
 
-    <div class="container mt-4">
-        <div class="d-flex justify-content-between align-items-center">
-            <h1>Clientes</h1>
+{% block content %}
+<div class="min-h-full w-full">
+    <div class="flex h-full">
+        
+        <div id="sidebar-overlay" class="sidebar-overlay hidden" onclick="toggleSidebar()"></div>
+        
+        <main class="flex-1 lg:ml-0 overflow-auto">
             
-            {% if perms.clients.add_client %}
-                <a href="{% url 'clients:create' %}" class="btn btn-primary">
-                    + Novo Cliente
-                </a>
-            {% endif %}
-        </div>
-
-        <!-- Tabela de clientes -->
-        <table class="table table-striped mt-4">
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>CPF</th>
-                    <th>Email</th>
-                    <th>Telefone</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for client in clients %}
-                <tr>
-                    <td>{{ client.name }}</td>
-                    <td>{{ client.cpf }}</td>
-                    <td>{{ client.email }}</td>
-                    <td>{{ client.phone }}</td>
-                    <td>
-                        <a href="{% url 'clients:detail' client.pk %}" 
-                           class="btn btn-sm btn-info">Ver</a>
-                        
-                        {% if perms.clients.change_client %}
-                            <a href="{% url 'clients:update' client.pk %}" 
-                               class="btn btn-sm btn-warning">Editar</a>
-                        {% endif %}
-                        
-                        {% if perms.clients.delete_client %}
-                            <a href="{% url 'clients:delete' client.pk %}" 
-                               class="btn btn-sm btn-danger">Deletar</a>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="5" class="text-center">
-                        Nenhum cliente cadastrado.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+            <div class="p-4 md:p-8 space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <h3 class="text-lg font-semibold text-white">Gerenciamento de Clientes</h3>
+                    <button onclick="openClientModal()" class="gradient-btn px-6 py-3 rounded-xl text-white font-medium flex items-center gap-2 transition-transform hover:scale-105">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg> Novo Cliente
+                    </button>
+                </div>
+                
+                <div class="glass-card neon-border p-4">
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <div class="flex-1 relative">
+                            <svg class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            <input type="text" placeholder="Buscar cliente..." class="input-field pl-12">
+                        </div>
+                        <select class="input-field md:w-48">
+                            <option>Todos os Status</option>
+                            <option>Ativos</option>
+                            <option>Inativos</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="glass-card neon-border overflow-x-auto">
+                    <table class="w-full min-w-[800px]">
+                        <thead>
+                            <tr class="text-left text-slate-400 text-sm border-b border-slate-700">
+                                <th class="pb-4">Cliente</th>
+                                <th class="pb-4">Email</th>
+                                <th class="pb-4">Telefone</th>
+                                <th class="pb-4">Compras</th>
+                                <th class="pb-4">Status</th>
+                                <th class="pb-4 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm">
+                            <tr class="table-row border-b border-slate-700/50">
+                                <td class="py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="avatar-md gradient-cyan-blue">MR</div>
+                                        <div>
+                                            <p class="font-medium text-white">Maria Rodrigues</p>
+                                            <p class="text-slate-400 text-xs">Cliente desde 2022</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 text-slate-300">maria@email.com</td>
+                                <td class="py-4 text-slate-300">(11) 99999-1234</td>
+                                <td class="py-4 text-cyan-400 font-medium text-center">3</td>
+                                <td class="py-4"><span class="badge badge-success">Ativo</span></td>
+                                <td class="py-4">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <button class="action-btn hover:text-cyan-400 hover:bg-cyan-500/10" title="Visualizar">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                        </button>
+                                        <button class="action-btn hover:text-blue-400 hover:bg-blue-500/10" title="Editar">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                        </button>
+                                        <button class="action-btn hover:text-red-400 hover:bg-red-500/10" title="Excluir">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="feedback-success" class="toast-feedback hidden">
+                    <div class="flex items-center gap-3">
+                        <div class="icon-circle bg-green-500/20 text-green-400">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                        </div>
+                        <div>
+                            <p class="font-medium text-green-400">Operação realizada com sucesso!</p>
+                            <p class="text-sm text-slate-400">O cliente foi salvo no sistema.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
-</body>
-</html>
+</div>
+
+{% include "modals/client_modal.html" %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/clients.js' %}"></script>
+{% endblock %}

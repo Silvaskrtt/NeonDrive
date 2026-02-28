@@ -1,0 +1,68 @@
+/* Estilo Global dos Inputs */
+.input-field {
+    width: 100%;
+    background: rgba(15, 23, 42, 0.6);
+    /* Slate-900/60 */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: #f1f5f9;
+    /* Slate-100 */
+    outline: none;
+    transition: all 0.2s;
+}
+
+.input-field:focus {
+    border-color: #06b6d4;
+    /* Cyan-500 */
+    box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+}
+
+/* Overlay da Sidebar */
+.sidebar-overlay {
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 30;
+}
+
+/* Avatares e Gradientes */
+.avatar-md {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+}
+
+.gradient-cyan-blue {
+    background: linear-gradient(to bottom right, #06b6d4, #3b82f6);
+}
+
+/* Botões de Ação na Tabela */
+.action-btn {
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    color: #94a3b8;
+    transition: all 0.2s;
+}
+
+/* Mensagem de Feedback (Toast) */
+.toast-feedback {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 1rem;
+    padding: 1rem;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    background-color: rgba(34, 197, 94, 0.1);
+}
+
+.icon-circle {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
