@@ -1,0 +1,67 @@
+/* Reaproveitando a glass-light do arquivo anterior */
+.glass-light {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Botões de ícones com hover suave */
+.icon-btn {
+    padding: 0.5rem;
+    border-radius: 0.75rem;
+    transition: background-color 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-btn:hover {
+    background-color: rgba(51, 65, 85, 0.5);
+    /* slate-700/50 */
+}
+
+/* Badge de Notificação */
+.notification-badge {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
+    width: 0.5rem;
+    height: 0.5rem;
+    background-color: #22d3ee;
+    /* cyan-400 */
+    border-radius: 9999px;
+}
+
+/* Animação Pulse Neon */
+.pulse-neon {
+    box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.7);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.7);
+    }
+
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 6px rgba(34, 211, 238, 0);
+    }
+
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(34, 211, 238, 0);
+    }
+}
+
+/* Avatar */
+.avatar-box {
+    width: 2.5rem;
+    /* 10 units */
+    height: 2.5rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
