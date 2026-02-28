@@ -1,0 +1,246 @@
+    {% load i18n allauth account socialaccount static %}
+
+    {% block extra_head %}
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+        <link href="{% static 'css/accounts/signup.css' %}" rel="stylesheet">
+    {% endblock extra_head %}
+
+    {% block content %}
+    <div class="container">
+        <h1>{% trans "Cadastre-se no Murilo Motors!" %}</h1>
+        <p class="subtitle">{% trans "Crie sua conta para começar" %}</p>
+
+        {% if not SOCIALACCOUNT_ONLY %}
+            <!-- SIGNUP FORM -->
+            <form method="post" action="{% url 'account_signup' %}">
+                {% csrf_token %}
+                
+                <!-- Email Field -->
+                <div class="input-group" id="emailBox">
+                    <input type="email" 
+                        name="email" 
+                        id="id_email" 
+                        placeholder="{% trans 'Email' %}" 
+                        value="{{ form.email.value|default:'' }}"
+                        required>
+                    <button type="button" class="arrow-btn" id="nextBtn">→</button>
+                </div>
+                
+                {% if form.email.errors %}
+                    <div class="error-message">
+                        {{ form.email.errors }}
+                    </div>
+                {% endif %}
+                
+                <!-- Username Field (inicialmente escondido) -->
+                <div class="extra-fields" id="usernameField" style="display: none;">
+                    <div class="input-group">
+                        <input type="text" 
+                            name="username" 
+                            id="id_username" 
+                            placeholder="{% trans 'Nome de usuário' %}"
+                            value="{{ form.username.value|default:'' }}"
+                            required>
+                    </div>
+                    
+                    {% if form.username.errors %}
+                        <div class="error-message">
+                            {{ form.username.errors }}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Password1 Field -->
+                    <div class="input-group">
+                        <input type="password" 
+                            name="password1" 
+                            id="id_password1" 
+                            placeholder="{% trans 'Senha' %}"
+                            required>
+                    </div>
+                    
+                    {% if form.password1.errors %}
+                        <div class="error-message">
+                            {{ form.password1.errors }}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Password2 Field -->
+                    <div class="input-group">
+                        <input type="password" 
+                            name="password2" 
+                            id="id_password2" 
+                            placeholder="{% trans 'Confirme sua senha' %}"
+                            required>
+                    </div>
+                    
+                    {% if form.password2.errors %}
+                        <div class="error-message">
+                            {{ form.password2.errors }}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Sign Up Button -->
+                    <button type="submit" class="signup-btn" id="signupBtn">
+                        {% trans "Cadastrar-se" %} →
+                    </button>
+                </div>
+                
+                {% if form.non_field_errors %}
+                    <div class="error-message non-field-errors">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+                
+                {{ redirect_field }}
+            </form>
+
+            <div class="divider">{% trans "OU" %}</div>
+        {% endif %}
+
+        <div class="footer">
+            {% trans "Já tem uma conta?" %}
+            <a href="{{ login_url }}">{% trans "Faça login" %}</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const nextBtn = document.getElementById("nextBtn");
+            const emailInput = document.getElementById("id_email");
+            const emailBox = document.getElementById("emailBox");
+            const extraFields = document.getElementById("usernameField");
+            const signupBtn = document.getElementById("signupBtn");
+            const form = document.querySelector('form');
+
+            // Função para validar email e mostrar campos extras
+            function validateAndProceed() {
+                const email = emailInput.value.trim();
+                
+                if (!email || !email.includes('@')) {
+                    emailBox.classList.add("error");
+                    setTimeout(() => {
+                        emailBox.classList.remove("error");
+                    }, 300);
+                    return false;
+                }
+                
+                // Esconde campo de email e mostra campos extras
+                emailBox.style.display = "none";
+                extraFields.style.display = "block";
+                
+                // Foca no username
+                setTimeout(() => {
+                    document.getElementById("id_username").focus();
+                }, 100);
+                
+                return true;
+            }
+
+            // Botão "Next" - Avança para os campos extras
+            if (nextBtn && emailInput) {
+                nextBtn.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    validateAndProceed();
+                });
+
+                emailInput.addEventListener("keypress", function(e) {
+                    if(e.key === "Enter") {
+                        e.preventDefault();
+                        validateAndProceed();
+                    }
+                });
+            }
+
+            // Validação dos campos antes de enviar
+            if (signupBtn && form) {
+                signupBtn.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    
+                    const username = document.getElementById("id_username").value.trim();
+                    const password1 = document.getElementById("id_password1").value.trim();
+                    const password2 = document.getElementById("id_password2").value.trim();
+                    
+                    let hasError = false;
+                    
+                    // Valida username
+                    if (!username) {
+                        document.getElementById("id_username").closest('.input-group').classList.add("error");
+                        hasError = true;
+                    }
+                    
+                    // Valida senha
+                    if (!password1) {
+                        document.getElementById("id_password1").closest('.input-group').classList.add("error");
+                        hasError = true;
+                    }
+                    
+                    // Valida confirmação de senha
+                    if (!password2) {
+                        document.getElementById("id_password2").closest('.input-group').classList.add("error");
+                        hasError = true;
+                    } else if (password1 !== password2) {
+                        document.getElementById("id_password2").closest('.input-group').classList.add("error");
+                        hasError = true;
+                    }
+                    
+                    if (hasError) {
+                        setTimeout(() => {
+                            document.querySelectorAll('.input-group.error').forEach(el => {
+                                el.classList.remove("error");
+                            });
+                        }, 300);
+                        return;
+                    }
+                    
+                    // Animação de sucesso
+                    signupBtn.innerText = "✓";
+                    signupBtn.style.background = "#00ff99";
+                    
+                    // Submete o formulário
+                    setTimeout(() => {
+                        form.submit();
+                    }, 300);
+                });
+
+                // Enter nos campos
+                const inputs = ['username', 'password1', 'password2'];
+                inputs.forEach(field => {
+                    const input = document.getElementById(`id_${field}`);
+                    if (input) {
+                        input.addEventListener("keypress", function(e) {
+                            if(e.key === "Enter") {
+                                e.preventDefault();
+                                signupBtn.click();
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Se houver erros no formulário, mostra todos os campos
+            {% if form.errors %}
+                if (emailInput && emailInput.value) {
+                    emailBox.style.display = "none";
+                    extraFields.style.display = "block";
+                }
+                
+                // Mostra erro nos campos apropriados
+                {% if form.email.errors %}
+                    emailBox.classList.add("error");
+                {% endif %}
+                
+                {% if form.username.errors %}
+                    document.getElementById("id_username").closest('.input-group').classList.add("error");
+                {% endif %}
+                
+                {% if form.password1.errors %}
+                    document.getElementById("id_password1").closest('.input-group').classList.add("error");
+                {% endif %}
+                
+                {% if form.password2.errors %}
+                    document.getElementById("id_password2").closest('.input-group').classList.add("error");
+                {% endif %}
+            {% endif %}
+        });
+    </script>
+    {% endblock content %}

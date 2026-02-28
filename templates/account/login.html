@@ -1,0 +1,207 @@
+{% load i18n allauth account socialaccount static %}
+
+{% block extra_head %}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="{% static 'css/accounts/login.css' %}" rel="stylesheet">
+{% endblock extra_head %}
+
+{% block content %}
+<div class="container">
+    <h1>{% trans "Bem-vindo(a) ao NeonDrive!" %}</h1>
+    <p class="subtitle">{% trans "Faça login para continuar" %}</p>
+
+    {% if not SOCIALACCOUNT_ONLY %}
+        <!-- EMAIL/USERNAME E PASSWORD LOGIN FORM -->
+        <form method="post" action="{% url 'account_login' %}">
+            {% csrf_token %}
+            
+            <!-- Campo de Login (email ou username) -->
+            <div class="input-group" id="loginFieldBox">
+                <input type="text" 
+                       name="login" 
+                       id="id_login" 
+                       placeholder="{% trans 'Email ou username' %}" 
+                       value="{{ form.login.value|default:'' }}"
+                       required>
+                <button type="button" class="arrow-btn" id="nextBtn">→</button>
+            </div>
+            
+            {% if form.login.errors %}
+                <div class="error-message">
+                    {{ form.login.errors }}
+                </div>
+            {% endif %}
+            
+            <!-- Campo de Senha (inicialmente escondido) -->
+            <div class="password-field" id="passwordField" style="display: none;">
+                <div class="input-group">
+                    <input type="password" 
+                           name="password" 
+                           id="id_password" 
+                           placeholder="{% trans 'Password' %}"
+                           {% if form.password.value %}value="{{ form.password.value }}"{% endif %}>
+                    <button type="submit" class="arrow-btn" id="loginBtn">→</button>
+                </div>
+                <div class="forgot-password">
+                    <a href="{% url 'account_reset_password' %}">{% trans "Esqueceu sua senha?" %}</a>
+                </div>
+            </div>
+            
+            {% if form.password.errors %}
+                <div class="error-message">
+                    {{ form.password.errors }}
+                </div>
+            {% endif %}
+            
+            {% if form.non_field_errors %}
+                <div class="error-message non-field-errors">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+            
+            {{ redirect_field }}
+        </form>
+
+        <div class="divider">{% trans "OU" %}</div>
+    {% endif %}
+
+    <!-- PASSKEY / CODE LOGIN -->
+    {% if LOGIN_BY_CODE_ENABLED or PASSKEY_LOGIN_ENABLED %}
+        {% if SOCIALACCOUNT_ENABLED %}
+            <div class="divider">{% trans "MORE OPTIONS" %}</div>
+        {% endif %}
+        
+        {% if PASSKEY_LOGIN_ENABLED %}
+            <form method="post" action="{% url 'mfa_login' %}" id="mfa_login" style="display: none;">
+                {% csrf_token %}
+            </form>
+            <button type="submit" form="mfa_login" class="social-link" id="passkey_login" style="width: 100%; border: none; background: none; padding: 0;">
+                <div class="social">
+                    <div>🔑 {% trans "Sign in with a passkey" %}</div>
+                    <span class="arrow">→</span>
+                </div>
+            </button>
+        {% endif %}
+        
+        {% if LOGIN_BY_CODE_ENABLED %}
+            <a href="{{ request_login_code_url }}" class="social-link">
+                <div class="social">
+                    <div>📱 {% trans "Send me a sign-in code" %}</div>
+                    <span class="arrow">→</span>
+                </div>
+            </a>
+        {% endif %}
+    {% endif %}
+
+    <div class="footer">
+        {% trans "Não tem uma conta?" %}
+        <a href="{{ signup_url }}">{% trans "Cadastre-se" %}</a>
+    </div>
+</div>
+
+{% if PASSKEY_LOGIN_ENABLED %}
+    {% include "mfa/webauthn/snippets/login_script.html" with button_id="passkey_login" %}
+{% endif %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const nextBtn = document.getElementById("nextBtn");
+        const loginField = document.getElementById("id_login");
+        const loginFieldBox = document.getElementById("loginFieldBox");
+        const passwordField = document.getElementById("passwordField");
+        const passwordInput = document.getElementById("id_password");
+        const loginBtn = document.getElementById("loginBtn");
+        const form = document.querySelector('form');
+
+        // Função para mostrar campo de senha
+        function showPasswordField() {
+            const loginValue = loginField.value.trim();
+            
+            if (!loginValue) {
+                // Se estiver vazio, mostra erro
+                loginFieldBox.classList.add("error");
+                setTimeout(() => {
+                    loginFieldBox.classList.remove("error");
+                }, 300);
+                return;
+            }
+            
+            // Esconde campo de login e mostra campo de senha
+            loginFieldBox.style.display = "none";
+            passwordField.style.display = "block";
+            passwordInput.focus();
+        }
+
+        // Botão "Next" - Avança para o campo de senha
+        if (nextBtn && loginField) {
+            nextBtn.addEventListener("click", function(e) {
+                e.preventDefault();
+                showPasswordField();
+            });
+
+            loginField.addEventListener("keypress", function(e) {
+                if(e.key === "Enter") {
+                    e.preventDefault();
+                    showPasswordField();
+                }
+            });
+        }
+
+        // Login com senha
+        if (loginBtn && passwordInput) {
+            loginBtn.addEventListener("click", function(e) {
+                e.preventDefault();
+                
+                if (!passwordInput.value.trim()) {
+                    passwordField.querySelector('.input-group').classList.add("error");
+                    setTimeout(() => {
+                        passwordField.querySelector('.input-group').classList.remove("error");
+                    }, 300);
+                    return;
+                }
+                
+                // Animação de sucesso
+                loginBtn.innerText = "✓";
+                loginBtn.style.background = "#00ff99";
+                
+                // Submete o formulário
+                setTimeout(() => {
+                    form.submit();
+                }, 300);
+            });
+
+            passwordInput.addEventListener("keypress", function(e) {
+                if(e.key === "Enter") {
+                    e.preventDefault();
+                    if (!passwordInput.value.trim()) {
+                        passwordField.querySelector('.input-group').classList.add("error");
+                        setTimeout(() => {
+                            passwordField.querySelector('.input-group').classList.remove("error");
+                        }, 300);
+                        return;
+                    }
+                    form.submit();
+                }
+            });
+        }
+
+        // Se houver erros no formulário, mostra o campo de senha
+        {% if form.errors %}
+            if (loginField && loginField.value) {
+                loginFieldBox.style.display = "none";
+                passwordField.style.display = "block";
+            }
+            
+            // Mostra erro no campo apropriado
+            {% if form.password.errors or form.non_field_errors %}
+                if (passwordField) {
+                    passwordField.querySelector('.input-group').classList.add("error");
+                    setTimeout(() => {
+                        passwordField.querySelector('.input-group').classList.remove("error");
+                    }, 300);
+                }
+            {% endif %}
+        {% endif %}
+    });
+</script>
+{% endblock content %}

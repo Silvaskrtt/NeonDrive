@@ -1,0 +1,221 @@
+/* Estilos específicos para o dashboard - Versão Cyberpunk */
+
+/* Stats Cards Customizations */
+.stats-card {
+    transition: all 0.3s ease;
+    background: rgba(15, 20, 25, 0.75);
+    backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.1);
+    border-radius: 25px;
+    padding: 20px;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 50px rgba(0, 255, 255, 0.25);
+    border-color: rgba(0, 255, 255, 0.3);
+}
+
+/* Chart Bars Animation */
+.chart-bar {
+    transition: height 0.5s ease;
+    animation: bar-rise 0.8s ease-out;
+    background: linear-gradient(180deg, #00ffd5, #00b3ff);
+    border-radius: 10px 10px 0 0;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+@keyframes bar-rise {
+    from {
+        height: 0;
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Progress Bar Customization */
+.progress-bar {
+    background: linear-gradient(90deg, #00ffd5 0%, #00b3ff 100%);
+    position: relative;
+    overflow: hidden;
+    border-radius: 50px;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+.progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg,
+            transparent,
+            rgba(255, 255, 255, 0.3),
+            transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* Mobile Sidebar Animation */
+#sidebar-overlay {
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-mobile-enter {
+    transform: translateX(-100%);
+}
+
+.sidebar-mobile-enter-active {
+    transform: translateX(0);
+    transition: transform 0.3s ease;
+}
+
+.sidebar-mobile-exit {
+    transform: translateX(0);
+}
+
+.sidebar-mobile-exit-active {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+}
+
+/* Dashboard Grid Layout */
+.dashboard-grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Card Hover Effects */
+.stat-card-hover {
+    position: relative;
+    overflow: hidden;
+    background: rgba(15, 20, 25, 0.75);
+    backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 25px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.stat-card-hover:hover {
+    border-color: rgba(0, 255, 255, 0.3);
+    box-shadow: 0 0 50px rgba(0, 255, 255, 0.15);
+}
+
+.stat-card-hover::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg,
+            transparent,
+            rgba(0, 255, 255, 0.1),
+            transparent);
+    transition: left 0.5s ease;
+}
+
+.stat-card-hover:hover::before {
+    left: 100%;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 640px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-container {
+        height: 200px;
+    }
+}
+
+/* Loading States */
+.skeleton-loading {
+    background: linear-gradient(90deg,
+            rgba(15, 20, 25, 0.8) 25%,
+            rgba(0, 255, 255, 0.15) 50%,
+            rgba(15, 20, 25, 0.8) 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 10px;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Background do Dashboard (se precisar) */
+.dashboard-body {
+    min-height: 100vh;
+    background: radial-gradient(circle at top left, #0ff2, transparent 40%),
+        radial-gradient(circle at bottom right, #0ff3, transparent 40%),
+        #05070a;
+}
+
+/* Títulos e textos */
+.dashboard-title {
+    color: white;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.dashboard-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 14px;
+}
+
+/* Valores numéricos nos cards */
+.stat-value {
+    font-size: 28px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #00ffd5, #00b3ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Scrollbar customizada (opcional) */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(15, 20, 25, 0.75);
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #00ffd5, #00b3ff);
+    border-radius: 50px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+}

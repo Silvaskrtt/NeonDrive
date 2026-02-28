@@ -1,0 +1,43 @@
+{% load i18n account allauth static %}
+
+{% block extra_head %}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="{% static 'css/accounts/email_confirm.css' %}" rel="stylesheet">
+{% endblock extra_head %}
+
+{% block content %}
+<div class="container">
+    {% element h1 %}
+        {% trans "Confirmação de Email" %}
+    {% endelement %}
+
+    {% if confirmation %}
+        {% user_display confirmation.email_address.user as user_display %}
+        {% if can_confirm %}
+            {% element p %}
+                {% blocktrans with confirmation.email_address.email as email %}Please confirm that <a href="mailto:{{ email }}">{{ email }}</a> is an email address for user {{ user_display }}.{% endblocktrans %}
+            {% endelement %}
+            
+            {% url 'account_confirm_email' confirmation.key as action_url %}
+            {% element form method="post" action=action_url %}
+                {% slot actions %}
+                    {% csrf_token %}
+                    {{ redirect_field }}
+                    {% element button type="submit" %}
+                        {% trans 'Confirm' %}
+                    {% endelement %}
+                {% endslot %}
+            {% endelement %}
+        {% else %}
+            {% element p %}
+                {% blocktrans %}Nao foi possivel confirmar o email {{ email }} porque ele já foi confirmado por uma conta diferente.{% endblocktrans %}
+            {% endelement %}
+        {% endif %}
+    {% else %}
+        {% url 'account_email' as email_url %}
+        {% element p %}
+            {% blocktrans %}Este link de confirmação de email expirou ou é inválido. Por favor, <a href="{{ email_url }}">solicite um novo link de confirmação</a>.{% endblocktrans %}
+        {% endelement %}
+    {% endif %}
+</div>
+{% endblock content %}
