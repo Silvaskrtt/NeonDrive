@@ -18,8 +18,11 @@ from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
+    # Admin site
     path('admin/', admin.site.urls),
     
+    # Authentication routes provided by django-allauth
     path('accounts/', include('allauth.urls')),
     path('', include('dashboard.urls')),
+    path('clientes/', include('clients.urls')),
 ]
