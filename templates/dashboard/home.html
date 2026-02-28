@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard - NeonDriv{% endblock %}
+
+{% block content %}
+<!-- Dashboard -->
+<div id="dashboard-screen" class="min-h-full w-full">
+    <div class="flex h-full">
+        <!-- Sidebar -->
+        {% include "includes/sidebar.html" %}
+        
+        <!-- Mobile Overlay -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 lg:hidden hidden" onclick="toggleSidebar()"></div>
+        
+        <!-- Main Content -->
+        <main class="flex-1 lg:ml-0 overflow-auto">
+            <!-- Header -->
+            {% include "includes/header.html" %}
+            
+            <!-- Dashboard Content -->
+            <div class="p-4 md:p-8 space-y-6">
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                    <!-- Card 1 -->
+                    <div class="glass rounded-2xl p-6 card-hover neon-border">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            </div>
+                            <span class="text-green-400 text-sm font-medium">+12%</span>
+                        </div>
+                        <h3 class="text-3xl font-bold neon-text">1,248</h3>
+                        <p class="text-slate-400 mt-1">Clientes Ativos</p>
+                    </div>
+                    
+                    <!-- Card 2 -->
+                    <div class="glass rounded-2xl p-6 card-hover neon-border">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                            </div>
+                            <span class="text-green-400 text-sm font-medium">+8%</span>
+                        </div>
+                        <h3 class="text-3xl font-bold neon-text">342</h3>
+                        <p class="text-slate-400 mt-1">Vendas do Mês</p>
+                    </div>
+                    
+                    <!-- Card 3 -->
+                    <div class="glass rounded-2xl p-6 card-hover neon-border">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <span class="text-green-400 text-sm font-medium">+23%</span>
+                        </div>
+                        <h3 class="text-3xl font-bold neon-text">R$ 2.4M</h3>
+                        <p class="text-slate-400 mt-1">Receita Total</p>
+                    </div>
+                    
+                    <!-- Card 4 -->
+                    <div class="glass rounded-2xl p-6 card-hover neon-border">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                </svg>
+                            </div>
+                            <span class="text-yellow-400 text-sm font-medium">87</span>
+                        </div>
+                        <h3 class="text-3xl font-bold neon-text">156</h3>
+                        <p class="text-slate-400 mt-1">Veículos em Estoque</p>
+                    </div>
+                </div>
+                
+                <!-- Charts Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Monthly Sales Chart -->
+                    <div class="glass rounded-2xl p-6 neon-border">
+                        <h3 class="text-lg font-semibold mb-6">Vendas Mensais</h3>
+                        <div class="h-64 flex items-end justify-between gap-2 px-4">
+                            <div class="flex flex-col items-center gap-2 flex-1">
+                                <div class="w-full bg-gradient-to-t from-cyan-500 to-cyan-400 rounded-t-lg" style="height: 40%"></div>
+                                <span class="text-xs text-slate-400">Jan</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-2 flex-1">
+                                <div class="w-full bg-gradient-to-t from-cyan-500 to-cyan-400 rounded-t-lg" style="height: 65%"></div>
+                                <span class="text-xs text-slate-400">Fev</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-2 flex-1">
+                                <div class="w-full bg-gradient-to-t from-cyan-500 to-cyan-400 rounded-t-lg" style="height: 45%"></div>
+                                <span class="text-xs text-slate-400">Mar</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-2 flex-1">
+                                <div class="w-full bg-gradient-to-t from-cyan-500 to-cyan-400 rounded-t-lg" style="height: 80%"></div>
+                                <span class="text-xs text-slate-400">Abr</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-2 flex-1">
+                                <div class="w-full bg-gradient-to-t from-cyan-500 to-cyan-400 rounded-t-lg" style="height: 55%"></div>
+                                <span class="text-xs text-slate-400">Mai</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-2 flex-1">
+                                <div class="w-full bg-gradient-to-t from-cyan-500 to-cyan-400 rounded-t-lg neon-glow" style="height: 90%"></div>
+                                <span class="text-xs text-slate-400">Jun</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Vehicle Categories -->
+                    <div class="glass rounded-2xl p-6 neon-border">
+                        <h3 class="text-lg font-semibold mb-6">Categorias de Veículos</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span class="text-slate-300">SUVs</span>
+                                    <span class="text-cyan-400">45%</span>
+                                </div>
+                                <div class="h-3 bg-slate-700 rounded-full overflow-hidden">
+                                    <div class="h-full bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-full" style="width: 45%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span class="text-slate-300">Sedans</span>
+                                    <span class="text-blue-400">28%</span>
+                                </div>
+                                <div class="h-3 bg-slate-700 rounded-full overflow-hidden">
+                                    <div class="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full" style="width: 28%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span class="text-slate-300">Hatchbacks</span>
+                                    <span class="text-purple-400">18%</span>
+                                </div>
+                                <div class="h-3 bg-slate-700 rounded-full overflow-hidden">
+                                    <div class="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full" style="width: 18%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span class="text-slate-300">Pickups</span>
+                                    <span class="text-orange-400">9%</span>
+                                </div>
+                                <div class="h-3 bg-slate-700 rounded-full overflow-hidden">
+                                    <div class="h-full bg-gradient-to-r from-orange-500 to-orange-400 rounded-full" style="width: 9%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Activity Table -->
+                {% include "includes/recent_sales_table.html" %}
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Modals -->
+{% include "modals/client_modal.html" %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock %}
