@@ -1,0 +1,45 @@
+/* Card de Veículo */
+.vehicle-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    border-radius: 1.25rem;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.vehicle-card:hover {
+    transform: translateY(-8px);
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* Espaço para Imagem */
+.vehicle-img-placeholder {
+    height: 10rem;
+    /* h-40 */
+    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Botão de ação circular nos cards */
+.action-btn-circle {
+    padding: 0.5rem;
+    border-radius: 0.75rem;
+    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.05);
+    transition: all 0.2s;
+}
+
+.action-btn-circle:hover {
+    color: #3b82f6;
+    /* blue-400 */
+    background: rgba(59, 130, 246, 0.15);
+}
+
+/* Badge de Reservado (Adicional) */
+.badge-warning {
+    background-color: rgba(234, 179, 8, 0.2);
+    color: #facc15;
+}
