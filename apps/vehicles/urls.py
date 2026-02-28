@@ -10,4 +10,5 @@ urlpatterns = [
     path('novo/', views.VehicleCreate.as_view(), name='create'),
     path('<int:pk>/editar/', views.VehicleUpdate.as_view(), name='update'),
     path('<int:pk>/deletar/', views.VehicleDelete.as_view(), name='delete'),
+    path('<int:pk>/detalhes/', views.VehicleDetail.as_view(), name='detail'),
 ]

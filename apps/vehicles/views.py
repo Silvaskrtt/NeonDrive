@@ -6,6 +6,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.urls import reverse_lazy
 from django.contrib import messages
 from .models import Vehicle
+from django.http import JsonResponse
 
 # ============================================
 # MIXIN PERSONALIZADO PARA ROLE
@@ -70,6 +71,7 @@ class VehicleCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     
     def form_valid(self, form):
         """Mensagem de sucesso ao criar"""
+        form.instance.user = self.request.user
         messages.success(self.request, 'Veiculo criado com sucesso!')
         return super().form_valid(form)
     
@@ -95,14 +97,44 @@ class VehicleDelete(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     - Permissions: Vehicles.delete_vehicle
     """
     model = Vehicle
-    template_name = 'vehicle/vehicle_confirm_delete.html'
-    success_url = reverse_lazy('vehicle:list')
-    permission_required = 'vehicle.delete_vehicle'
+    template_name = 'vehicles/vehicle_confirm_delete.html'
+    success_url = reverse_lazy('vehicles:list')
+    permission_required = 'vehicles.delete_vehicle'
     
     def delete(self, request, *args, **kwargs):
         """Mensagem de sucesso ao deletar"""
         messages.success(request, 'Veiculo removido com sucesso!')
         return super().delete(request, *args, **kwargs)
+    
+class VehicleDetail(LoginRequiredMixin, DetailView):
+    """
+    Detalhes do veículo - pode retornar JSON ou HTML
+    """
+    model = Vehicle
+    template_name = 'vehicles/vehicle_detail.html'
+    
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        
+        # Se for requisição AJAX, retorna JSON
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'id': self.object.id,
+                'mark': self.object.mark,
+                'model': self.object.model,
+                'year': self.object.year,
+                'car_plate': self.object.car_plate,
+                'color': self.object.color,
+                'value': str(self.object.value),
+                'status': self.object.status,
+                'status_display': self.object.get_status_display(),
+                'user': self.object.user.username,
+                'created_at': self.object.created_at.strftime('%d/%m/%Y %H:%M'),
+            })
+        
+        # Se não for AJAX, renderiza template normal
+        context = self.get_context_data()
+        return self.render_to_response(context)
     
 
 # ============================================

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Editar{% else %}Novo{% endif %} Veículo - AutoNex{% endblock %}
+
+{% block content %}
+<div class="min-h-full w-full">
+    <div class="flex h-full">
+        
+        <div id="sidebar-overlay" class="sidebar-overlay hidden" onclick="toggleSidebar()"></div>
+        
+        <main class="flex-1 lg:ml-0 overflow-auto">
+            <div class="p-4 md:p-8 max-w-4xl mx-auto">
+                <div class="mb-6">
+                    <a href="{% url 'vehicles:list' %}" class="text-cyan-400 hover:text-cyan-300 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Voltar para lista
+                    </a>
+                </div>
+
+                <div class="bg-slate-800/50 rounded-xl p-6 md:p-8">
+                    <h2 class="text-2xl font-bold text-white mb-6">
+                        {% if form.instance.pk %}Editar Veículo{% else %}Novo Veículo{% endif %}
+                    </h2>
+
+                    <form method="post" class="space-y-6">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded-lg">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {% for field in form %}
+                            <div class="{% if field.name == 'value' or field.name == 'status' %}md:col-span-1{% else %}md:col-span-2{% endif %}">
+                                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-300 mb-2">
+                                    {{ field.label }}
+                                </label>
+                                {{ field }}
+                                {% if field.errors %}
+                                <p class="mt-1 text-sm text-red-500">{{ field.errors.0 }}</p>
+                                {% endif %}
+                                {% if field.help_text %}
+                                <p class="mt-1 text-sm text-slate-400">{{ field.help_text }}</p>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="flex justify-end gap-4 pt-4">
+                            <a href="{% url 'vehicles:list' %}" class="px-6 py-3 bg-slate-700 text-white rounded-xl hover:bg-slate-600 transition-colors">
+                                Cancelar
+                            </a>
+                            <button type="submit" class="gradient-btn px-6 py-3 rounded-xl text-white font-medium transition-transform hover:scale-105">
+                                {% if form.instance.pk %}Salvar Alterações{% else %}Criar Veículo{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
