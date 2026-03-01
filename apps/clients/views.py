@@ -253,7 +253,7 @@ class ClientCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     - Permissions: clients.add_client
     """
     model = Client
-    fields = ['name', 'email', 'phone', 'address', 'document']  # Especifique os campos
+    form_class = ClientForm
     template_name = 'clients/client_form.html'
     success_url = reverse_lazy('clients:list')
     permission_required = 'clients.add_client'
