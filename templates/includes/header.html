@@ -1,6 +1,8 @@
+{% load static %}
+
 <header id="main-header" class="glass-light sticky top-0 z-20 px-4 md:px-8 py-4 flex items-center justify-between">
     <div class="flex items-center gap-4">
-        <button id="mobile-menu-btn" class="lg:hidden icon-btn">
+        <button id="mobile-menu-btn" class="lg:hidden icon-btn" onclick="toggleSidebar()">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
@@ -11,21 +13,42 @@
     </div>
     
     <div class="flex items-center gap-4">
-        <button class="relative icon-btn">
+        <button class="relative icon-btn" id="notification-btn">
             <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
-            <span class="notification-badge pulse-neon"></span>
+            <span class="notification-badge pulse-neon" id="notification-badge" style="display: none;"></span>
         </button>
         
-        <div class="flex items-center gap-3 profile-info">
+        <div class="flex items-center gap-3 profile-info cursor-pointer" id="profile-menu-btn">
             <div class="avatar-box gradient-btn text-white font-bold">
-                {{ request.user.get_initials|default:"JD" }}
+                {{ request.user.get_initials|default:request.user.username|slice:":2"|upper }}
             </div>
             <div class="hidden md:block">
-                <p class="text-sm font-medium">{{ request.user.get_full_name|default:"João Dev" }}</p>
-                <p class="text-xs text-slate-400">{{ request.user.get_role|default:"Administrador" }}</p>
+                <p class="text-sm font-medium">{{ request.user.get_full_name|default:request.user.username }}</p>
+                <p class="text-xs text-slate-400">
+                    {% if is_admin %}
+                        Administrador
+                    {% elif is_user %}
+                        Usuário
+                    {% else %}
+                        {{ user_role|default:"Visitante" }}
+                    {% endif %}
+                </p>
             </div>
         </div>
+        
+        <!-- Menu dropdown do perfil -->
+        {% if request.user.is_authenticated %}
+        <div id="profile-dropdown" class="absolute right-4 top-20 w-48 glass-light rounded-xl shadow-lg py-2 hidden">
+            <div class="px-4 py-2 text-xs text-slate-400 border-b border-slate-700">
+                {{ request.user.email }}
+            </div>
+            <a href="{% url 'account_change_password' %}" class="block px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-white/10">Alterar senha</a>
+            <a href="{% url 'account_email' %}" class="block px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-white/10">Gerenciar e-mails</a>
+            <hr class="my-2 border-slate-700">
+            <a href="{% url 'account_logout' %}" class="block px-4 py-2 text-sm text-red-400 hover:bg-white/10">Sair</a>
+        </div>
+        {% endif %}
     </div>
 </header>
