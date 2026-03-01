@@ -1,3 +1,4 @@
+<!-- apps/sales/templates/sales/sale_confirm_delete.html -->
 {% extends "base.html" %}
 {% load static %}
 
@@ -20,7 +21,7 @@
                 </div>
                 
                 <!-- Card de Confirmação -->
-                <div class="glass rounded-2xl p-8 neon-border text-center">
+                <div class="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700 text-center">
                     <div class="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
                         <svg class="w-10 h-10 text-red-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -33,9 +34,9 @@
                         <span class="text-white font-medium">#{{ object.id|stringformat:"04d" }}</span>?
                     </p>
                     
-                    <div class="bg-slate-800/50 rounded-lg p-4 mb-6 text-left">
+                    <div class="bg-slate-900/50 rounded-lg p-4 mb-6 text-left">
                         <p class="text-slate-300"><span class="text-slate-500">Cliente:</span> {{ object.client.name }}</p>
-                        <p class="text-slate-300"><span class="text-slate-500">Veículo:</span> {{ object.vehicle.model }} - {{ object.vehicle.plate }}</p>
+                        <p class="text-slate-300"><span class="text-slate-500">Veículo:</span> {{ object.vehicle.model }} - {{ object.vehicle.plate|default:"Sem placa" }}</p>
                         <p class="text-slate-300"><span class="text-slate-500">Valor:</span> R$ {{ object.value|floatformat:2 }}</p>
                         <p class="text-slate-300"><span class="text-slate-500">Data:</span> {{ object.sale_date|date:"d/m/Y H:i" }}</p>
                     </div>

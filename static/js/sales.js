@@ -5,6 +5,8 @@ function viewSale(saleId) {
     const modal = document.getElementById('saleModal');
     const modalContent = document.getElementById('modalContent');
     
+    if (!modal || !modalContent) return;
+    
     // Mostra modal com loading
     modal.classList.remove('hidden');
     modalContent.innerHTML = `
@@ -59,7 +61,7 @@ function viewSale(saleId) {
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <p class="text-sm text-slate-500">Valor</p>
-                                    <p class="text-cyan-400 font-bold text-xl">R$ ${parseFloat(data.value).toFixed(2)}</p>
+                                    <p class="text-cyan-400 font-bold text-xl">R$ ${parseFloat(data.value).toFixed(2).replace('.', ',')}</p>
                                 </div>
                                 <div>
                                     <p class="text-sm text-slate-500">Método</p>
@@ -102,7 +104,9 @@ function viewSale(saleId) {
 // Função para fechar modal
 function closeModal() {
     const modal = document.getElementById('saleModal');
-    modal.classList.add('hidden');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
 }
 
 // Fecha modal com tecla ESC
@@ -118,10 +122,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (valueInput) {
         valueInput.addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, '');
-            value = (value / 100).toFixed(2) + '';
-            value = value.replace('.', ',');
-            value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
-            e.target.value = value;
+            if (value) {
+                value = (parseInt(value) / 100).toFixed(2);
+                value = value.replace('.', ',');
+                value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+                e.target.value = value;
+            }
         });
         
         // Remove formatação antes de enviar o form

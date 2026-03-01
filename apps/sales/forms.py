@@ -47,8 +47,7 @@ class SaleForm(forms.ModelForm):
         # Filtra veículos disponíveis
         self.fields['vehicle'].queryset = Vehicle.objects.filter(status='available')
         
-        # Filtra clientes ativos
-        self.fields['client'].queryset = Client.objects.filter(is_active=True)
+        self.fields['client'].queryset = Client.objects.all()
         
         # Adiciona classes CSS adicionais
         self.fields['value'].widget.attrs['class'] += ' text-right'
