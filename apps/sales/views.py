@@ -8,7 +8,7 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from django.db import models
 from .models import Sale
-from .forms import SaleForm 
+from .forms import SaleForm
 
 # ============================================
 # MIXIN PERSONALIZADO PARA ROLE
@@ -23,7 +23,7 @@ class RoleRequiredMixin:
             return self.handle_no_permission()
         
         try:
-            if request.user.profile.role in self.allowed_roles:
+            if hasattr(request.user, 'profile') and request.user.profile.role in self.allowed_roles:
                 return super().dispatch(request, *args, **kwargs)
             else:
                 messages.error(request, 'Acesso negado. Você não tem permissão.')
@@ -31,7 +31,6 @@ class RoleRequiredMixin:
         except:
             messages.error(request, 'Perfil não encontrado.')
             return redirect('sales:list')
-        return super().dispatch(request, *args, **kwargs)
 
 
 # ============================================
@@ -46,23 +45,27 @@ class SaleList(LoginRequiredMixin, ListView):
     model = Sale
     template_name = 'sales/sale_list.html'
     context_object_name = 'sales'
-    paginate_by = 20
+    paginate_by = 10
     
     def get_queryset(self):
         """Permite buscar vendas"""
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().select_related('client', 'vehicle', 'user')
         search = self.request.GET.get('search')
         if search:
             queryset = queryset.filter(
                 models.Q(client__name__icontains=search) |
                 models.Q(vehicle__model__icontains=search) |
-                models.Q(vehicle__plate__icontains=search)
+                models.Q(vehicle__plate__icontains=search) |
+                models.Q(user__username__icontains=search)
             )
         return queryset
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['search'] = self.request.GET.get('search', '')
+        context['can_add'] = self.request.user.has_perm('sales.add_sale')
+        context['can_change'] = self.request.user.has_perm('sales.change_sale')
+        context['can_delete'] = self.request.user.has_perm('sales.delete_sale')
         return context
 
 
@@ -77,25 +80,34 @@ class SaleDetail(LoginRequiredMixin, DetailView):
     
 
 class SaleDetailJSON(LoginRequiredMixin, View):
-    """Retorna dados do venda em JSON para o modal"""
+    """Retorna dados da venda em JSON para o modal"""
     
     def get(self, request, pk):
         try:
-            sale = Sale.objects.get(pk=pk)
+            sale = Sale.objects.select_related('client', 'vehicle', 'user').get(pk=pk)
             data = {
                 'id': sale.id,
                 'value': str(sale.value),
                 'payment_method': dict(Sale.PAYMENT_CHOICES).get(sale.payment_method, sale.payment_method),
                 'status': dict(Sale.STATUS_CHOICES).get(sale.status, sale.status),
                 'sale_date': sale.sale_date.strftime('%d/%m/%Y %H:%M'),
-                'user': sale.user.username if sale.user else 'N/A',
-                'client': sale.client.name if sale.client else 'N/A',
-                'vehicle': f"{sale.vehicle.model} - {sale.vehicle.plate}" if sale.vehicle else 'N/A',
+                'user': sale.user.get_full_name() or sale.user.username if sale.user else 'N/A',
+                'client': {
+                    'id': sale.client.id,
+                    'name': sale.client.name,
+                    'email': getattr(sale.client, 'email', 'N/A'),
+                    'phone': getattr(sale.client, 'phone', 'N/A'),
+                } if sale.client else None,
+                'vehicle': {
+                    'id': sale.vehicle.id,
+                    'model': sale.vehicle.model,
+                    'plate': sale.vehicle.plate,
+                    'year': getattr(sale.vehicle, 'year', 'N/A'),
+                } if sale.vehicle else None,
             }
             return JsonResponse(data)
         except Sale.DoesNotExist:
-            return JsonResponse({'error': 'Venda não encontrado'}, status=404)
-
+            return JsonResponse({'error': 'Venda não encontrada'}, status=404)
 
 class SaleCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     """
@@ -108,12 +120,22 @@ class SaleCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     success_url = reverse_lazy('sales:list')
     permission_required = 'sales.add_sale'
     
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+    
     def form_valid(self, form):
         """Mensagem de sucesso ao criar"""
         form.instance.user = self.request.user
-        messages.success(self.request, 'Venda criado com sucesso!')
+        messages.success(self.request, 'Venda criada com sucesso!')
         return super().form_valid(form)
-
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Nova Venda'
+        context['button_text'] = 'Criar Venda'
+        return context
 
 class SaleUpdate(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     """
@@ -126,10 +148,21 @@ class SaleUpdate(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     success_url = reverse_lazy('sales:list')
     permission_required = 'sales.change_sale'
     
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+    
     def form_valid(self, form):
         """Mensagem de sucesso ao editar"""
-        messages.success(self.request, 'Venda atualizado com sucesso!')
+        messages.success(self.request, 'Venda atualizada com sucesso!')
         return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Editar Venda'
+        context['button_text'] = 'Atualizar Venda'
+        return context
 
 class SaleDelete(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     """
@@ -143,9 +176,8 @@ class SaleDelete(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     
     def delete(self, request, *args, **kwargs):
         """Mensagem de sucesso ao deletar"""
-        messages.success(request, 'Venda removido com sucesso!')
+        messages.success(request, 'Venda removida com sucesso!')
         return super().delete(request, *args, **kwargs)
-
 
 # ============================================
 # VERSÕES COM ROLE (caso queira usar role em vez de permissões)

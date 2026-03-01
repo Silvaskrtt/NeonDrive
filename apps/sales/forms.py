@@ -1,7 +1,6 @@
 # apps/sales/forms.py
-
-from django import forms
 from django.db import models
+from django import forms
 from .models import Sale
 from clients.models import Client
 from vehicles.models import Vehicle
@@ -9,19 +8,26 @@ from vehicles.models import Vehicle
 class SaleForm(forms.ModelForm):
     class Meta:
         model = Sale
-        fields = ['value', 'payment_method', 'status', 'vehicle', 'client', 'user']
+        fields = ['value', 'payment_method', 'status', 'vehicle', 'client']
         widgets = {
             'value': forms.NumberInput(attrs={
-                'class': 'form-control',
+                'class': 'form-control w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500 transition-colors',
                 'step': '0.01',
                 'min': '0',
                 'placeholder': '0,00'
             }),
-            'payment_method': forms.Select(attrs={'class': 'form-control'}),
-            'status': forms.Select(attrs={'class': 'form-control'}),
-            'vehicle': forms.Select(attrs={'class': 'form-control'}),
-            'client': forms.Select(attrs={'class': 'form-control'}),
-            'user': forms.Select(attrs={'class': 'form-control'}),
+            'payment_method': forms.Select(attrs={
+                'class': 'form-control w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500 transition-colors'
+            }),
+            'status': forms.Select(attrs={
+                'class': 'form-control w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500 transition-colors'
+            }),
+            'vehicle': forms.Select(attrs={
+                'class': 'form-control w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500 transition-colors'
+            }),
+            'client': forms.Select(attrs={
+                'class': 'form-control w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500 transition-colors'
+            }),
         }
         labels = {
             'value': 'Valor Total (R$)',
@@ -29,31 +35,31 @@ class SaleForm(forms.ModelForm):
             'status': 'Status da Venda',
             'vehicle': 'Veículo',
             'client': 'Cliente',
-            'user': 'Usuário Responsável',
         }
         help_texts = {
             'value': 'Digite o valor total da venda',
-            'vehicle': 'Selecione o veículo vendido',
         }
     
     def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         
-        # Filtra apenas veículos disponíveis (se tiver esse campo)
-        if hasattr(Vehicle, 'status'):
-            self.fields['vehicle'].queryset = Vehicle.objects.filter(status='available')
+        # Filtra veículos disponíveis
+        self.fields['vehicle'].queryset = Vehicle.objects.filter(status='available')
         
-        # Filtra apenas clientes ativos (se tiver esse campo)
-        if hasattr(Client, 'is_active'):
-            self.fields['client'].queryset = Client.objects.filter(is_active=True)
+        # Filtra clientes ativos
+        self.fields['client'].queryset = Client.objects.filter(is_active=True)
         
-        # User não é obrigatório no form (será preenchido automaticamente)
-        self.fields['user'].required = False
+        # Adiciona classes CSS adicionais
+        self.fields['value'].widget.attrs['class'] += ' text-right'
         
-        # Se for edição, mostra o usuário atual
+        # Se for edição, permite veículos já vendidos (o veículo atual)
         if self.instance and self.instance.pk:
-            self.fields['user'].required = False
-            self.fields['user'].widget.attrs['readonly'] = True
+            vehicle = self.instance.vehicle
+            if vehicle and vehicle.status != 'available':
+                self.fields['vehicle'].queryset = Vehicle.objects.filter(
+                    models.Q(status='available') | models.Q(pk=vehicle.pk)
+                )
     
     def clean_value(self):
         value = self.cleaned_data.get('value')
@@ -64,10 +70,15 @@ class SaleForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         vehicle = cleaned_data.get('vehicle')
-        client = cleaned_data.get('client')
         
-        # Validação personalizada: verificar se o veículo já não foi vendido
-        if vehicle and vehicle.sale_set.exclude(pk=self.instance.pk if self.instance else None).exists():
-            raise forms.ValidationError('Este veículo já foi vendido!')
+        # Validação: verificar se o veículo já não foi vendido
+        if vehicle and vehicle.pk:
+            # Exclui a venda atual da verificação (para edição)
+            existing_sales = Sale.objects.filter(vehicle=vehicle)
+            if self.instance and self.instance.pk:
+                existing_sales = existing_sales.exclude(pk=self.instance.pk)
+            
+            if existing_sales.exists():
+                raise forms.ValidationError('Este veículo já foi vendido!')
         
         return cleaned_data
