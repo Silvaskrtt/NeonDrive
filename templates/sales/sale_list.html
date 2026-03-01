@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Vendas - AutoNex{% endblock %}
+
+{% block content %}
+<div class="min-h-full w-full">
+    <div class="flex h-full">
+        
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 lg:hidden hidden" onclick="toggleSidebar()"></div>
+        
+        <main class="flex-1 lg:ml-0 overflow-auto">
+            
+            <div class="p-4 md:p-8 space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <h3 class="text-lg font-semibold">Gestão de Vendas</h3>
+                    <button class="gradient-btn px-6 py-3 rounded-xl text-white font-medium flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg> Nova Venda
+                    </button>
+                </div>
+                
+                <div class="glass rounded-2xl p-6 neon-border overflow-x-auto">
+                    <table class="w-full min-w-[900px]">
+                        <thead>
+                            <tr class="text-left text-slate-400 text-sm border-b border-slate-700">
+                                <th class="pb-4">ID</th>
+                                <th class="pb-4">Cliente</th>
+                                <th class="pb-4">Veículo</th>
+                                <th class="pb-4">Vendedor</th>
+                                <th class="pb-4">Valor</th>
+                                <th class="pb-4">Data</th>
+                                <th class="pb-4">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm">
+                            <tr class="table-row border-b border-slate-700/50">
+                                <td class="py-4 text-cyan-400">#V001</td>
+                                <td class="py-4">Maria Rodrigues</td>
+                                <td class="py-4 text-slate-300">BMW X5 2024</td>
+                                <td class="py-4 text-slate-300">João Silva</td>
+                                <td class="py-4 text-cyan-400 font-medium">R$ 485.000</td>
+                                <td class="py-4 text-slate-400">15/01/2024</td>
+                                <td class="py-4"><span class="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-xs">Concluída</span></td>
+                            </tr>
+                            <tr class="table-row border-b border-slate-700/50">
+                                <td class="py-4 text-cyan-400">#V002</td>
+                                <td class="py-4">Carlos Silva</td>
+                                <td class="py-4 text-slate-300">Audi A4 2023</td>
+                                <td class="py-4 text-slate-300">Ana Costa</td>
+                                <td class="py-4 text-cyan-400 font-medium">R$ 298.000</td>
+                                <td class="py-4 text-slate-400">14/01/2024</td>
+                                <td class="py-4"><span class="px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-400 text-xs">Pendente</span></td>
+                            </tr>
+                            <tr class="table-row">
+                                <td class="py-4 text-cyan-400">#V003</td>
+                                <td class="py-4">Ana Ferreira</td>
+                                <td class="py-4 text-slate-300">Mercedes C300 2024</td>
+                                <td class="py-4 text-slate-300">Pedro Santos</td>
+                                <td class="py-4 text-cyan-400 font-medium">R$ 356.000</td>
+                                <td class="py-4 text-slate-400">13/01/2024</td>
+                                <td class="py-4"><span class="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-xs">Concluída</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/sales.js' %}"></script>
+{% endblock %}
