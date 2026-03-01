@@ -1,0 +1,90 @@
+<!-- Modal de Cliente -->
+<div id="client-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+    <div class="bg-slate-800 rounded-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b border-slate-700 flex justify-between items-center sticky top-0 bg-slate-800">
+            <h3 class="text-xl font-bold text-white" id="modal-title">Novo Cliente</h3>
+            <button onclick="closeClientModal()" class="text-slate-400 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        
+        <form id="client-form" method="post" enctype="multipart/form-data" class="p-6 space-y-6">
+            {% csrf_token %}
+            <input type="hidden" id="client-id" name="client_id">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Nome -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Nome Completo *</label>
+                    <input type="text" id="name" name="name" required
+                           class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-500"
+                           placeholder="Digite o nome completo">
+                </div>
+
+                <!-- CPF -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">CPF *</label>
+                    <input type="text" id="cpf" name="cpf" required maxlength="14"
+                           class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-500"
+                           placeholder="000.000.000-00">
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">E-mail *</label>
+                    <input type="email" id="email" name="email" required
+                           class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-500"
+                           placeholder="email@exemplo.com">
+                </div>
+
+                <!-- Telefone -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Telefone *</label>
+                    <input type="text" id="phone" name="phone" required maxlength="15"
+                           class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-500"
+                           placeholder="(00) 00000-0000">
+                </div>
+
+                <!-- Documento -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Documento (PDF/Imagem)</label>
+                    <input type="file" id="document" name="document" accept=".pdf,.jpg,.jpeg,.png"
+                           class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-cyan-600 file:text-white hover:file:bg-cyan-700">
+                </div>
+
+                <!-- Endereço -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Endereço</label>
+                    <textarea id="address" name="address" rows="3"
+                              class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-500"
+                              placeholder="Endereço completo"></textarea>
+                </div>
+            </div>
+
+            <!-- Preview do documento atual (para edição) -->
+            <div id="current-document-preview" class="hidden">
+                <p class="text-sm font-medium text-slate-300 mb-2">Documento atual:</p>
+                <a id="document-link" href="#" target="_blank" class="text-cyan-400 hover:text-cyan-300 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    Visualizar documento atual
+                </a>
+            </div>
+
+            <!-- Botões -->
+            <div class="flex justify-end gap-4 pt-4 border-t border-slate-700">
+                <button type="button" onclick="closeClientModal()" 
+                        class="px-6 py-3 bg-slate-700 text-white rounded-xl hover:bg-slate-600 transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit" 
+                        class="gradient-btn px-6 py-3 rounded-xl text-white font-medium transition-transform hover:scale-105">
+                    Salvar Cliente
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

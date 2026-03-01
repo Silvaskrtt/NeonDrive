@@ -11,4 +11,5 @@ urlpatterns = [
     path('novo/', views.ClientCreate.as_view(), name='create'),
     path('<int:pk>/editar/', views.ClientUpdate.as_view(), name='update'),
     path('<int:pk>/deletar/', views.ClientDelete.as_view(), name='delete'),
+    path('<int:pk>/detalhes/', views.ClientDetailJSON.as_view(), name='detail_json'),
 ]

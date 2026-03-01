@@ -1,11 +1,13 @@
 # apps/clients/views.py
 
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.views.generic import *
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.urls import reverse_lazy
 from django.contrib import messages
 from .models import Client
+from .forms import ClientForm 
 
 # ============================================
 # MIXIN PERSONALIZADO PARA ROLE
@@ -67,6 +69,27 @@ class ClientDetail(LoginRequiredMixin, DetailView):
     model = Client
     template_name = 'clients/client_detail.html'
     context_object_name = 'client'
+    
+
+class ClientDetailJSON(LoginRequiredMixin, View):
+    """Retorna dados do cliente em JSON para o modal"""
+    
+    def get(self, request, pk):
+        try:
+            client = Client.objects.get(pk=pk)
+            data = {
+                'id': client.id,
+                'name': client.name,
+                'cpf': client.cpf,
+                'email': client.email,
+                'phone': client.phone,
+                'address': client.address,
+                'document': client.document.url if client.document else None,
+                'created_at': client.created_at.strftime('%d/%m/%Y'),
+            }
+            return JsonResponse(data)
+        except Client.DoesNotExist:
+            return JsonResponse({'error': 'Cliente não encontrado'}, status=404)
 
 
 class ClientCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
@@ -75,7 +98,7 @@ class ClientCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     - Permissions: clients.add_client
     """
     model = Client
-    fields = ['name', 'email', 'phone', 'address', 'document']  # Especifique os campos
+    form_class = ClientForm
     template_name = 'clients/client_form.html'
     success_url = reverse_lazy('clients:list')
     permission_required = 'clients.add_client'
@@ -92,7 +115,7 @@ class ClientUpdate(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     - Permissions: clients.change_client
     """
     model = Client
-    fields = ['name', 'email', 'phone', 'address', 'document']
+    form_class = ClientForm
     template_name = 'clients/client_form.html'
     success_url = reverse_lazy('clients:list')
     permission_required = 'clients.change_client'

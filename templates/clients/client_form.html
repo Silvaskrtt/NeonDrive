@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Editar{% else %}Novo{% endif %} Cliente - AutoNex{% endblock %}
+
+{% block content %}
+<div class="min-h-full w-full">
+    <div class="flex h-full">
+        
+        <div id="sidebar-overlay" class="sidebar-overlay hidden" onclick="toggleSidebar()"></div>
+        
+        <main class="flex-1 lg:ml-0 overflow-auto">
+            <div class="p-4 md:p-8 max-w-4xl mx-auto">
+                <div class="mb-6">
+                    <a href="{% url 'clients:list' %}" class="text-cyan-400 hover:text-cyan-300 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Voltar para lista
+                    </a>
+                </div>
+
+                <div class="bg-slate-800/50 rounded-xl p-6 md:p-8">
+                    <h2 class="text-2xl font-bold text-white mb-6">
+                        {% if form.instance.pk %}Editar Cliente{% else %}Novo Cliente{% endif %}
+                    </h2>
+
+                    <form method="post" enctype="multipart/form-data" class="space-y-6">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded-lg">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Nome -->
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-slate-300 mb-2">Nome Completo *</label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                <p class="mt-1 text-sm text-red-500">{{ form.name.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- CPF -->
+                            <div>
+                                <label class="block text-sm font-medium text-slate-300 mb-2">CPF *</label>
+                                {{ form.cpf }}
+                                {% if form.cpf.errors %}
+                                <p class="mt-1 text-sm text-red-500">{{ form.cpf.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Email -->
+                            <div>
+                                <label class="block text-sm font-medium text-slate-300 mb-2">E-mail *</label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                <p class="mt-1 text-sm text-red-500">{{ form.email.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Telefone -->
+                            <div>
+                                <label class="block text-sm font-medium text-slate-300 mb-2">Telefone *</label>
+                                {{ form.phone }}
+                                {% if form.phone.errors %}
+                                <p class="mt-1 text-sm text-red-500">{{ form.phone.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Documento -->
+                            <div>
+                                <label class="block text-sm font-medium text-slate-300 mb-2">Documento (PDF/Imagem)</label>
+                                {{ form.document }}
+                                {% if form.document.errors %}
+                                <p class="mt-1 text-sm text-red-500">{{ form.document.errors.0 }}</p>
+                                {% endif %}
+                                
+                                {% if form.instance.document %}
+                                <div class="mt-2">
+                                    <p class="text-sm text-slate-400">Documento atual:</p>
+                                    <a href="{{ form.instance.document.url }}" target="_blank" 
+                                       class="text-cyan-400 hover:text-cyan-300 text-sm flex items-center gap-1">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                        </svg>
+                                        Visualizar
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Endereço -->
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-slate-300 mb-2">Endereço</label>
+                                {{ form.address }}
+                                {% if form.address.errors %}
+                                <p class="mt-1 text-sm text-red-500">{{ form.address.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end gap-4 pt-4">
+                            <a href="{% url 'clients:list' %}" class="px-6 py-3 bg-slate-700 text-white rounded-xl hover:bg-slate-600 transition-colors">
+                                Cancelar
+                            </a>
+                            <button type="submit" class="gradient-btn px-6 py-3 rounded-xl text-white font-medium transition-transform hover:scale-105">
+                                {% if form.instance.pk %}Salvar Alterações{% else %}Criar Cliente{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Máscara para CPF
+    document.getElementById('id_cpf')?.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 11) value = value.slice(0, 11);
+        
+        if (value.length <= 11) {
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+        }
+        e.target.value = value;
+    });
+
+    // Máscara para telefone
+    document.getElementById('id_phone')?.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 11) value = value.slice(0, 11);
+        
+        if (value.length <= 10) {
+            value = value.replace(/(\d{2})(\d)/, '($1) $2');
+            value = value.replace(/(\d{4})(\d)/, '$1-$2');
+        } else {
+            value = value.replace(/(\d{2})(\d)/, '($1) $2');
+            value = value.replace(/(\d{5})(\d)/, '$1-$2');
+        }
+        e.target.value = value;
+    });
+</script>
+{% endblock %}
