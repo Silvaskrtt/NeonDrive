@@ -17,9 +17,13 @@ class UserProfileForm(forms.ModelForm):
     """Form para dados do Profile"""
     class Meta:
         model = Profile
-        fields = ['role']
+        fields = ['role', 'phone']
         widgets = {
             'role': forms.Select(attrs={'class': 'w-full px-4 py-3 rounded-xl input-field text-slate-100'}),
+            'phone': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-3 rounded-xl input-field text-slate-100',
+                'placeholder': '(11) 99999-9999'
+            }),
         }
     
     def __init__(self, *args, **kwargs):
