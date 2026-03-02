@@ -80,12 +80,19 @@ class SaleList(LoginRequiredMixin, ListView):
         """Permite buscar vendas"""
         queryset = super().get_queryset().select_related('client', 'vehicle', 'user')
         search = self.request.GET.get('search')
+        
         if search:
             queryset = queryset.filter(
                 models.Q(client__name__icontains=search) |
+                models.Q(client__cpf__icontains=search) |
                 models.Q(vehicle__model__icontains=search) |
                 models.Q(vehicle__plate__icontains=search) |
-                models.Q(user__username__icontains=search)
+                models.Q(vehicle__brand__icontains=search) |
+                models.Q(user__username__icontains=search) |
+                models.Q(user__first_name__icontains=search) |
+                models.Q(user__last_name__icontains=search) |
+                models.Q(value__icontains=search) |
+                models.Q(sale_date__icontains=search.replace('/', '-')) 
             )
         return queryset.order_by('-sale_date')
     
@@ -96,7 +103,6 @@ class SaleList(LoginRequiredMixin, ListView):
         context['can_change'] = self.request.user.has_perm('sales.change_sale')
         context['can_delete'] = self.request.user.has_perm('sales.delete_sale')
         return context
-
 
 class SaleDetail(LoginRequiredMixin, DetailView):
     """
@@ -143,7 +149,7 @@ class SaleDetailJSON(LoginRequiredMixin, View):
                 'vehicle': {
                     'id': sale.vehicle.id,
                     'model': sale.vehicle.model,
-                    'plate': sale.vehicle.plate,
+                    'car_plate': sale.vehicle.car_plate,
                     'year': getattr(sale.vehicle, 'year', 'N/A'),
                     'color': getattr(sale.vehicle, 'color', 'N/A'),
                     'brand': getattr(sale.vehicle, 'brand', 'N/A'),
