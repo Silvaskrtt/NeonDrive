@@ -1,13 +1,41 @@
 # apps/clients/views.py
 
 from django.http import JsonResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import *
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.urls import reverse_lazy
 from django.contrib import messages
 from .models import Client
 from .forms import ClientForm 
+
+class ClientToggleStatus(LoginRequiredMixin, PermissionRequiredMixin, View):
+    """
+    Alterna o status do cliente (ATIVO/INATIVO)
+    """
+    permission_required = 'clients.change_client'
+    
+    def post(self, request, pk):
+        client = get_object_or_404(Client, pk=pk)
+        old_status = client.get_status_display()
+        new_status = client.toggle_status()
+        
+        messages.success(
+            request, 
+            f'Status do cliente {client.name} alterado de {old_status} para {new_status}'
+        )
+        
+        # Se for requisição AJAX, retorna JSON
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'status': client.status,
+                'status_display': client.get_status_display(),
+                'message': f'Status alterado para {client.get_status_display()}'
+            })
+        
+        # Se não for AJAX, redireciona de volta
+        return redirect(request.META.get('HTTP_REFERER', reverse_lazy('clients:list')))
 
 # ============================================
 # MIXIN PERSONALIZADO PARA ROLE
@@ -84,6 +112,8 @@ class ClientDetailJSON(LoginRequiredMixin, View):
                 'email': client.email,
                 'phone': client.phone,
                 'address': client.address,
+                'status': client.status,
+                'status_display': client.get_status_display(),
                 'document': client.document.url if client.document else None,
                 'created_at': client.created_at.strftime('%d/%m/%Y'),
             }
@@ -149,7 +179,7 @@ class ClientDelete(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
 class ClientCreateByRole(LoginRequiredMixin, RoleRequiredMixin, CreateView):
     """Criar cliente baseado em role (ADMIN apenas)"""
     model = Client
-    fields = '__all__'
+    form_class = ClientForm
     template_name = 'clients/client_form.html'
     success_url = reverse_lazy('clients:list')
     allowed_roles = ['ADMIN']  # Apenas ADMIN pode criar
@@ -158,7 +188,7 @@ class ClientCreateByRole(LoginRequiredMixin, RoleRequiredMixin, CreateView):
 class ClientUpdateByRole(LoginRequiredMixin, RoleRequiredMixin, UpdateView):
     """Editar cliente baseado em role (ADMIN e USER)"""
     model = Client
-    fields = '__all__'
+    form_class = ClientForm
     template_name = 'clients/client_form.html'
     success_url = reverse_lazy('clients:list')
     allowed_roles = ['ADMIN', 'USER']  # ADMIN e USER podem editar
@@ -270,7 +300,7 @@ class ClientUpdate(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     - Permissions: clients.change_client
     """
     model = Client
-    fields = ['name', 'email', 'phone', 'address', 'document']
+    form_class = ClientForm
     template_name = 'clients/client_form.html'
     success_url = reverse_lazy('clients:list')
     permission_required = 'clients.change_client'
@@ -304,7 +334,7 @@ class ClientDelete(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
 class ClientCreateByRole(LoginRequiredMixin, RoleRequiredMixin, CreateView):
     """Criar cliente baseado em role (ADMIN apenas)"""
     model = Client
-    fields = '__all__'
+    form_class = ClientForm
     template_name = 'clients/client_form.html'
     success_url = reverse_lazy('clients:list')
     allowed_roles = ['ADMIN']  # Apenas ADMIN pode criar
@@ -313,7 +343,7 @@ class ClientCreateByRole(LoginRequiredMixin, RoleRequiredMixin, CreateView):
 class ClientUpdateByRole(LoginRequiredMixin, RoleRequiredMixin, UpdateView):
     """Editar cliente baseado em role (ADMIN e USER)"""
     model = Client
-    fields = '__all__'
+    form_class = ClientForm
     template_name = 'clients/client_form.html'
     success_url = reverse_lazy('clients:list')
     allowed_roles = ['ADMIN', 'USER']  # ADMIN e USER podem editar

@@ -26,12 +26,18 @@ def validate_cpf(value):
 
 
 class Client(models.Model):
+    STATUS_CHOICES = [
+        ('ATIVO', 'Ativo'),
+        ('INATIVO', 'Inativo'),
+    ]
+    
     name = models.CharField('Nome', max_length=100)
     cpf = models.CharField('CPF', max_length=14, unique=True, validators=[validate_cpf])
     email = models.EmailField('E-mail')
     phone = models.CharField('Telefone', max_length=20)
     address = models.TextField('Endereço', blank=True, null=True)
     document = models.FileField('Documento', upload_to='documents/', blank=True, null=True)
+    status = models.CharField('Status', max_length=10, choices=STATUS_CHOICES, default='ATIVO')
     
     created_at = models.DateTimeField('Criado em', auto_now_add=True)
     updated_at = models.DateTimeField('Atualizado em', auto_now=True)
@@ -56,3 +62,9 @@ class Client(models.Model):
     def save(self, *args, **kwargs):
         
         super().save(*args, **kwargs)
+        
+    def toggle_status(self):
+        """Alterna o status do cliente"""
+        self.status = 'INATIVO' if self.status == 'ATIVO' else 'ATIVO'
+        self.save()
+        return self.status

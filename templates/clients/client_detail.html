@@ -70,10 +70,14 @@
                                 <p class="text-lg font-medium text-white">{{ client.phone }}</p>
                             </div>
 
-                            <!-- Status -->
+                            <!-- Status (AGORA CLICÁVEL) -->
                             <div class="bg-slate-700/20 rounded-lg p-4">
                                 <p class="text-sm text-slate-400 mb-1">Status</p>
-                                <span class="badge badge-success">Ativo</span>
+                                <button onclick="toggleClientStatus({{ client.id }}, '{{ client.name|escapejs }}')" 
+                                        class="status-badge status-{{ client.status|lower }} cursor-pointer hover:opacity-80 transition-opacity text-left px-3 py-1 rounded-full text-sm font-medium inline-flex items-center"
+                                        title="Clique para alterar status">
+                                    {{ client.get_status_display }}
+                                </button>
                             </div>
 
                             <!-- Endereço -->
@@ -104,4 +108,278 @@
         </main>
     </div>
 </div>
+
+<!-- Modal de Confirmação de Status -->
+<div id="status-confirm-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+    <div class="bg-slate-800 rounded-xl p-6 max-w-md w-full mx-4 transform transition-all">
+        <div class="text-center">
+            <!-- Ícone de aviso -->
+            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-yellow-500/10 flex items-center justify-center">
+                <svg class="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            
+            <h3 class="text-xl font-bold text-white mb-2">Alterar Status</h3>
+            <p class="text-slate-300 mb-6" id="status-confirm-message">
+                Deseja realmente alterar o status deste cliente?
+            </p>
+            
+            <div class="flex gap-3 justify-center">
+                <button onclick="closeStatusModal()" 
+                        class="px-6 py-2.5 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors">
+                    Cancelar
+                </button>
+                <button id="confirm-status-btn" 
+                        class="px-6 py-2.5 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Inativação (estilo diferente para quando for inativar) -->
+<div id="inactive-confirm-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+    <div class="bg-slate-800 rounded-xl p-6 max-w-md w-full mx-4 transform transition-all">
+        <div class="text-center">
+            <!-- Ícone de alerta vermelho para inativação -->
+            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center">
+                <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+            </div>
+            
+            <h3 class="text-xl font-bold text-white mb-2">Inativar Cliente</h3>
+            <p class="text-slate-300 mb-2" id="inactive-confirm-message">
+                Tem certeza que deseja inativar o cliente <span id="inactive-client-name" class="text-white font-semibold"></span>?
+            </p>
+            <p class="text-sm text-slate-400 mb-6">
+                Clientes inativos não aparecerão em algumas listas e não poderão realizar novas compras.
+            </p>
+            
+            <div class="flex gap-3 justify-center">
+                <button onclick="closeStatusModal()" 
+                        class="px-6 py-2.5 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors">
+                    Cancelar
+                </button>
+                <button id="confirm-inactive-btn" 
+                        class="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                    Sim, Inativar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Reativação (opcional - para quando for reativar) -->
+<div id="active-confirm-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+    <div class="bg-slate-800 rounded-xl p-6 max-w-md w-full mx-4 transform transition-all">
+        <div class="text-center">
+            <!-- Ícone de sucesso verde para reativação -->
+            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/10 flex items-center justify-center">
+                <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            
+            <h3 class="text-xl font-bold text-white mb-2">Reativar Cliente</h3>
+            <p class="text-slate-300 mb-2" id="active-confirm-message">
+                Deseja reativar o cliente <span id="active-client-name" class="text-white font-semibold"></span>?
+            </p>
+            <p class="text-sm text-slate-400 mb-6">
+                O cliente voltará a aparecer nas listas e poderá realizar novas compras.
+            </p>
+            
+            <div class="flex gap-3 justify-center">
+                <button onclick="closeStatusModal()" 
+                        class="px-6 py-2.5 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors">
+                    Cancelar
+                </button>
+                <button id="confirm-active-btn" 
+                        class="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    Sim, Reativar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Variáveis para controle do status
+let currentStatusClientId = null;
+let currentStatusClientName = '';
+let currentStatusBadge = null;
+
+// Função para alternar status com confirmação
+function toggleClientStatus(clientId, clientName) {
+    currentStatusClientId = clientId;
+    currentStatusClientName = clientName;
+    
+    // Guarda referência ao badge atual
+    currentStatusBadge = event.currentTarget;
+    
+    // Primeiro, precisamos saber o status atual para mostrar o modal apropriado
+    fetch(`/clientes/${clientId}/detalhes/`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const currentStatus = data.status || 'ATIVO';
+        
+        if (currentStatus === 'ATIVO') {
+            // Se estiver ativo, mostra modal de inativação
+            document.getElementById('inactive-client-name').textContent = clientName;
+            document.getElementById('inactive-confirm-modal').classList.remove('hidden');
+            document.getElementById('inactive-confirm-modal').classList.add('flex');
+        } else {
+            // Se estiver inativo, mostra modal de reativação
+            document.getElementById('active-client-name').textContent = clientName;
+            document.getElementById('active-confirm-modal').classList.remove('hidden');
+            document.getElementById('active-confirm-modal').classList.add('flex');
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao buscar status do cliente:', error);
+        // Fallback para modal genérico
+        document.getElementById('status-confirm-message').textContent = 
+            `Deseja realmente alterar o status do cliente ${clientName}?`;
+        document.getElementById('status-confirm-modal').classList.remove('hidden');
+        document.getElementById('status-confirm-modal').classList.add('flex');
+    });
+}
+
+// Confirmar mudança de status
+document.getElementById('confirm-status-btn')?.addEventListener('click', function() {
+    executeStatusChange(currentStatusClientId);
+});
+
+document.getElementById('confirm-inactive-btn')?.addEventListener('click', function() {
+    executeStatusChange(currentStatusClientId);
+});
+
+document.getElementById('confirm-active-btn')?.addEventListener('click', function() {
+    executeStatusChange(currentStatusClientId);
+});
+
+// Executa a mudança de status via AJAX
+function executeStatusChange(clientId) {
+    if (!clientId) return;
+    
+    fetch(`/clientes/${clientId}/toggle-status/`, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Atualiza o badge na interface
+            if (currentStatusBadge) {
+                currentStatusBadge.textContent = data.status_display;
+                currentStatusBadge.className = `status-badge status-${data.status.toLowerCase()} cursor-pointer hover:opacity-80 transition-opacity text-left px-3 py-1 rounded-full text-sm font-medium inline-flex items-center`;
+            }
+            
+            // Mostra feedback de sucesso
+            showFeedback(data.message, 'success');
+            
+            // Fecha os modais
+            closeStatusModal();
+        } else {
+            showFeedback('Erro ao alterar status', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        showFeedback('Erro ao alterar status', 'error');
+        closeStatusModal();
+    });
+}
+
+// Fecha os modais de status
+function closeStatusModal() {
+    document.getElementById('status-confirm-modal')?.classList.add('hidden');
+    document.getElementById('status-confirm-modal')?.classList.remove('flex');
+    document.getElementById('inactive-confirm-modal')?.classList.add('hidden');
+    document.getElementById('inactive-confirm-modal')?.classList.remove('flex');
+    document.getElementById('active-confirm-modal')?.classList.add('hidden');
+    document.getElementById('active-confirm-modal')?.classList.remove('flex');
+    currentStatusClientId = null;
+}
+
+// Função auxiliar para pegar o CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Função para mostrar feedback
+function showFeedback(message, type = 'success') {
+    // Você pode implementar um toast notification aqui
+    // Por enquanto, vamos usar um alert simples
+    alert(message);
+}
+
+// Fecha o modal se clicar fora dele
+window.addEventListener('click', function(event) {
+    const statusModal = document.getElementById('status-confirm-modal');
+    const inactiveModal = document.getElementById('inactive-confirm-modal');
+    const activeModal = document.getElementById('active-confirm-modal');
+    
+    if (event.target === statusModal) {
+        closeStatusModal();
+    }
+    if (event.target === inactiveModal) {
+        closeStatusModal();
+    }
+    if (event.target === activeModal) {
+        closeStatusModal();
+    }
+});
+</script>
+
+<style>
+/* Estilos para os badges de status */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.status-ativo {
+    background-color: rgba(34, 197, 94, 0.2);
+    color: rgb(74, 222, 128);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.status-inativo {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: rgb(248, 113, 113);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Estilo para o botão de status no hover */
+.status-badge:hover {
+    filter: brightness(1.1);
+}
+</style>
 {% endblock %}
