@@ -212,25 +212,44 @@ class SaleDelete(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     success_url = reverse_lazy('sales:list')
     permission_required = 'sales.delete_sale'
     
-    def delete(self, request, *args, **kwargs):
-        """Recupera o veículo antes de deletar a venda"""
+    def post(self, request, *args, **kwargs):
+        """
+        Sobrescreve o método POST que é chamado no formulário de confirmação
+        """
         # Pega a venda antes de deletar
-        sale = self.get_object()
-        vehicle = sale.vehicle
+        self.object = self.get_object()
+        vehicle = self.object.vehicle
         
-        # Executa o delete
+        # Executa o delete da view (não do model)
+        response = super().post(request, *args, **kwargs)
+        
+        # Retorna o veículo para disponível
+        if vehicle:
+            vehicle.status = 'available'
+            vehicle.save()
+            messages.success(request, f'Venda removida e veículo {vehicle.model} - {vehicle.car_plate} retornado ao estoque!')
+        else:
+            messages.success(request, 'Venda removida com sucesso!')
+            
+        return response
+    
+    def delete(self, request, *args, **kwargs):
+        """
+        Método delete da view (chamado para requisições DELETE)
+        """
+        # Pega a venda antes de deletar
+        self.object = self.get_object()
+        vehicle = self.object.vehicle
+        
+        # Executa o delete da view
         response = super().delete(request, *args, **kwargs)
         
         # Retorna o veículo para disponível
         if vehicle:
             vehicle.status = 'available'
             vehicle.save()
-            messages.success(request, f'Venda removida e veículo {vehicle.model} retornado ao estoque!')
-        else:
-            messages.success(request, 'Venda removida com sucesso!')
             
         return response
-
 
 # ============================================
 # VERSÕES COM ROLE (caso queira usar role em vez de permissões)
