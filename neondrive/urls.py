@@ -25,6 +25,7 @@ urlpatterns = [
     
     # Authentication routes provided by django-allauth
     path('accounts/', include('allauth.urls')),
+    path('profile/', include('accounts.urls')),
     path('', include('dashboard.urls')),
     path('clientes/', include('clients.urls')),
     path('veiculos/', include('vehicles.urls')),
