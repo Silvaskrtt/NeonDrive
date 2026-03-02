@@ -144,8 +144,17 @@ class SaleCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
         return kwargs
     
     def form_valid(self, form):
-        """Mensagem de sucesso ao criar"""
+        """Mensagem de sucesso ao criar e atualiza status do veículo"""
         form.instance.user = self.request.user
+        
+        # Pega o veículo selecionado
+        vehicle = form.cleaned_data.get('vehicle')
+        
+        # Atualiza o status do veículo para vendido
+        if vehicle:
+            vehicle.status = 'sold'  # ou 'reserved' se preferir
+            vehicle.save()
+        
         messages.success(self.request, 'Venda criada com sucesso!')
         return super().form_valid(form)
     
@@ -159,7 +168,6 @@ class SaleCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
         context['title'] = 'Nova Venda'
         context['button_text'] = 'Criar Venda'
         return context
-
 
 class SaleUpdate(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     """
@@ -205,9 +213,23 @@ class SaleDelete(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     permission_required = 'sales.delete_sale'
     
     def delete(self, request, *args, **kwargs):
-        """Mensagem de sucesso ao deletar"""
-        messages.success(request, 'Venda removida com sucesso!')
-        return super().delete(request, *args, **kwargs)
+        """Recupera o veículo antes de deletar a venda"""
+        # Pega a venda antes de deletar
+        sale = self.get_object()
+        vehicle = sale.vehicle
+        
+        # Executa o delete
+        response = super().delete(request, *args, **kwargs)
+        
+        # Retorna o veículo para disponível
+        if vehicle:
+            vehicle.status = 'available'
+            vehicle.save()
+            messages.success(request, f'Venda removida e veículo {vehicle.model} retornado ao estoque!')
+        else:
+            messages.success(request, 'Venda removida com sucesso!')
+            
+        return response
 
 
 # ============================================
