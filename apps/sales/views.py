@@ -9,6 +9,35 @@ from django.contrib import messages
 from django.db import models
 from .models import Sale
 from .forms import SaleForm
+from vehicles.models import Vehicle
+
+class GetVehicleDataJSON(LoginRequiredMixin, View):
+    """
+    Retorna dados do veículo em JSON para preenchimento automático
+    """
+    def get(self, request, pk):
+        try:
+            vehicle = Vehicle.objects.get(pk=pk)
+            
+            # Verifica se o veículo está disponível
+            if vehicle.status != 'available':
+                return JsonResponse({
+                    'error': f'Veículo não está disponível. Status atual: {vehicle.get_status_display()}'
+                }, status=400)
+            
+            data = {
+                'id': vehicle.id,
+                'value': str(vehicle.value),
+                'mark': vehicle.mark,
+                'model': vehicle.model,
+                'year': vehicle.year,
+                'car_plate': vehicle.car_plate,
+                'status': vehicle.status,
+            }
+            return JsonResponse(data)
+            
+        except Vehicle.DoesNotExist:
+            return JsonResponse({'error': 'Veículo não encontrado'}, status=404)
 
 # ============================================
 # MIXIN PERSONALIZADO PARA ROLE
@@ -150,6 +179,11 @@ class SaleCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
         # Pega o veículo selecionado
         vehicle = form.cleaned_data.get('vehicle')
         
+        # Verifica se o veículo ainda está disponível
+        if vehicle and vehicle.status != 'available':
+            messages.error(self.request, f'Veículo {vehicle.model} não está mais disponível!')
+            return self.form_invalid(form)
+        
         # Atualiza o status do veículo para vendido
         if vehicle:
             vehicle.status = 'sold'  # ou 'reserved' se preferir
@@ -186,9 +220,38 @@ class SaleUpdate(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
         return kwargs
     
     def form_valid(self, form):
-        """Mensagem de sucesso ao editar"""
+        """Mensagem de sucesso ao editar e atualiza status dos veículos"""
+        
+        # Pega a venda atual antes de salvar
+        old_sale = self.get_object()
+        old_vehicle = old_sale.vehicle
+        
+        # Pega o novo veículo selecionado
+        new_vehicle = form.cleaned_data.get('vehicle')
+        
+        # Verifica se o novo veículo está disponível (se for diferente do antigo)
+        if new_vehicle and new_vehicle != old_vehicle:
+            if new_vehicle.status != 'available':
+                messages.error(self.request, f'Veículo {new_vehicle.model} não está disponível!')
+                return self.form_invalid(form)
+        
+        # Executa o save
+        response = super().form_valid(form)
+        
+        # Atualiza status dos veículos
+        if old_vehicle != new_vehicle:
+            # Retorna o veículo antigo para disponível
+            if old_vehicle:
+                old_vehicle.status = 'available'
+                old_vehicle.save()
+            
+            # Marca o novo veículo como vendido
+            if new_vehicle:
+                new_vehicle.status = 'sold'
+                new_vehicle.save()
+        
         messages.success(self.request, 'Venda atualizada com sucesso!')
-        return super().form_valid(form)
+        return response
     
     def form_invalid(self, form):
         """Mensagem de erro ao editar"""
@@ -200,7 +263,6 @@ class SaleUpdate(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
         context['title'] = 'Editar Venda'
         context['button_text'] = 'Atualizar Venda'
         return context
-
 
 class SaleDelete(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     """

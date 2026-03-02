@@ -115,5 +115,76 @@
     </div>
 </div>
 
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const vehicleSelect = document.getElementById('id_vehicle');
+    const valueInput = document.getElementById('id_value');
+    const statusField = document.getElementById('id_status'); // Se você quiser mostrar alerta
+    
+    // Função para buscar dados do veículo
+    function fetchVehicleData(vehicleId) {
+        if (!vehicleId) {
+            valueInput.value = '';
+            return;
+        }
+        
+        // Mostra loading no campo de valor
+        valueInput.value = 'Carregando...';
+        valueInput.disabled = true;
+        
+        fetch(`/vendas/get-vehicle-data/${vehicleId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    valueInput.value = '';
+                    // Reseta o select se o veículo não estiver disponível
+                    vehicleSelect.value = '';
+                } else {
+                    // Preenche o valor automaticamente
+                    valueInput.value = data.value;
+                    
+                    // Opcional: mostra informações do veículo
+                    console.log(`Veículo selecionado: ${data.mark} ${data.model} - ${data.car_plate}`);
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao buscar veículo:', error);
+                alert('Erro ao carregar dados do veículo');
+                valueInput.value = '';
+            })
+            .finally(() => {
+                valueInput.disabled = false;
+            });
+    }
+    
+    // Event listener para quando o veículo for selecionado
+    if (vehicleSelect) {
+        vehicleSelect.addEventListener('change', function() {
+            const vehicleId = this.value;
+            fetchVehicleData(vehicleId);
+        });
+        
+        // Se estiver editando e já tiver um veículo selecionado, carrega o valor
+        if (vehicleSelect.value) {
+            fetchVehicleData(vehicleSelect.value);
+        }
+    }
+    
+    // Validação antes de enviar o formulário
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            if (vehicleSelect.value && !valueInput.value) {
+                e.preventDefault();
+                alert('Por favor, aguarde o carregamento do valor do veículo.');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+
 <script src="{% static 'js/sales.js' %}"></script>
 {% endblock %}

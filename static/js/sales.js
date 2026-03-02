@@ -122,3 +122,14 @@ function confirmDelete(saleId) {
         window.location.href = `/vendas/${saleId}/deletar/`;
     }
 }
+
+// Marcar visualmente os veículos no select
+function markVehicleOptions() {
+    const options = document.querySelectorAll('#id_vehicle option');
+    options.forEach(option => {
+        if (option.value) {
+            // Você precisaria de uma forma de saber o status de cada veículo
+            // Isso exigiria passar os dados dos veículos para o template
+        }
+    });
+}

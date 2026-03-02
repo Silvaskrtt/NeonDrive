@@ -44,21 +44,24 @@ class SaleForm(forms.ModelForm):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         
-        # Filtra veículos disponíveis
+        # Filtra apenas veículos disponíveis
         self.fields['vehicle'].queryset = Vehicle.objects.filter(status='available')
+        
+        # Se for edição, inclui o veículo atual mesmo se não estiver disponível
+        if self.instance and self.instance.pk:
+            current_vehicle = self.instance.vehicle
+            if current_vehicle and current_vehicle.status != 'available':
+                self.fields['vehicle'].queryset = Vehicle.objects.filter(
+                    models.Q(status='available') | models.Q(pk=current_vehicle.pk)
+                )
         
         self.fields['client'].queryset = Client.objects.all()
         
         # Adiciona classes CSS adicionais
         self.fields['value'].widget.attrs['class'] += ' text-right'
         
-        # Se for edição, permite veículos já vendidos (o veículo atual)
-        if self.instance and self.instance.pk:
-            vehicle = self.instance.vehicle
-            if vehicle and vehicle.status != 'available':
-                self.fields['vehicle'].queryset = Vehicle.objects.filter(
-                    models.Q(status='available') | models.Q(pk=vehicle.pk)
-                )
+        
+        self.fields['value'].widget.attrs['readonly'] = True
     
     def clean_value(self):
         value = self.cleaned_data.get('value')
