@@ -2,6 +2,7 @@
 
 from django.contrib import admin
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from .models import Client
 
 @admin.register(Client)
@@ -88,15 +89,22 @@ class ClientAdmin(admin.ModelAdmin):
         Indica se o cliente tem documento anexado
         """
         if obj.document:
-            return format_html(
-                '<img src="/static/admin/img/icon-yes.svg" alt="Sim"> '
-                '<a href="{}" target="_blank">Ver</a>',
-                obj.document.url
-            )
-        return format_html('<img src="/static/admin/img/icon-no.svg" alt="Não">')
+            # Verifica se o campo document tem o atributo url (se for FileField)
+            if hasattr(obj.document, 'url'):
+                return format_html(
+                    '<img src="/static/admin/img/icon-yes.svg" alt="Sim"> '
+                    '<a href="{}" target="_blank">Ver</a>',
+                    obj.document.url
+                )
+            else:
+                # Se for apenas uma string ou outro tipo de campo
+                return mark_safe(
+                    '<img src="/static/admin/img/icon-yes.svg" alt="Sim"> {}'.format(obj.document)
+                )
+        # Usar mark_safe para strings sem placeholders
+        return mark_safe('<img src="/static/admin/img/icon-no.svg" alt="Não">')
     
     tem_documento.short_description = 'Documento'
-    tem_documento.boolean = False  # Não usa ícone padrão do admin
     
     # Ações personalizadas
     actions = ['exportar_selecionados']
