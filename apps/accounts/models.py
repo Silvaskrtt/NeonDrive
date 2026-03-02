@@ -66,23 +66,3 @@ class Profile(models.Model):
         if self.avatar and hasattr(self.avatar, 'url'):
             return self.avatar.url
         return None
-
-
-# Signal para criar perfil automaticamente
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    """Cria um perfil automaticamente quando um usuário é criado"""
-    if created:
-        Profile.objects.create(user=instance)
-
-
-# Signal para salvar perfil
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    """Salva o perfil quando o usuário é salvo"""
-    if not kwargs.get('created', False):  # Só executa se NÃO for criação
-        try:
-            if hasattr(instance, 'profile'):
-                instance.profile.save()
-        except:
-            pass
