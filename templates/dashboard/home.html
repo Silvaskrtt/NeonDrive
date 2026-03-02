@@ -73,8 +73,17 @@
                 {% for month_data in monthly_chart_data %}
                 <div class="flex flex-col items-center gap-2 flex-1">
                     <div class="w-full bg-gradient-to-t from-cyan-500 to-cyan-400 rounded-t-lg transition-all duration-500 hover:from-cyan-400 hover:to-cyan-300" 
-                         style="height: {% widthratio month_data.count 10 10 %}%"></div>
+                        style="height: {% widthratio month_data.count 10 10 %}%">
+                        <!-- Tooltip opcional -->
+                        <div class="opacity-0 hover:opacity-100 transition-opacity text-xs text-center bg-slate-800 p-1 rounded">
+                            {{ month_data.count }} vendas
+                        </div>
+                    </div>
                     <span class="text-xs text-slate-400">{{ month_data.month }}</span>
+                </div>
+                {% empty %}
+                <div class="w-full text-center text-slate-500">
+                    Nenhum dado disponível para o período
                 </div>
                 {% endfor %}
             </div>
