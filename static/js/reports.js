@@ -11,12 +11,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Variáveis para os gráficos
     let lineChart, pieChart;
     
+    // Variáveis de exportação (globais para acesso das funções do modal)
+    window.selectedFormat = 'excel';
+    window.selectedPeriod = 'month';
+    
     // Carrega dados iniciais
     carregarDados('month');
     
     // Event Listeners
     periodSelect.addEventListener('change', function() {
         carregarDados(this.value);
+        window.selectedPeriod = this.value;
     });
     
     // Toggle dropdown de exportação
@@ -26,48 +31,44 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Fecha dropdown ao clicar fora
-    document.addEventListener('click', function() {
-        exportDropdown.classList.add('hidden');
+    document.addEventListener('click', function(e) {
+        if (!exportBtn.contains(e.target) && !exportDropdown.contains(e.target)) {
+            exportDropdown.classList.add('hidden');
+        }
     });
     
-    // Opções de exportação
+    // Opções de exportação do dropdown
     document.querySelectorAll('.export-option').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
             const format = this.dataset.format;
             const period = periodSelect.value;
-            exportarRelatorio(format, period);
+            
+            // Abre o modal com o formato pré-selecionado
+            openExportModal(format, period);
             exportDropdown.classList.add('hidden');
         });
     });
     
     // Função principal para carregar dados
     function carregarDados(period) {
-        // Mostra loading
         loadingEl.classList.remove('hidden');
         reportCards.classList.add('opacity-50');
         
         fetch(`/relatorios/api/dados/?period=${period}`)
             .then(response => response.json())
             .then(data => {
-                // Atualiza cards
                 atualizarCards(data);
-                
-                // Atualiza gráficos
                 atualizarGraficos(data.dados_graficos);
-                
-                // Atualiza tabela
                 atualizarTabela(data.relatorio_detalhado);
-                
-                // Esconde loading
                 loadingEl.classList.add('hidden');
                 reportCards.classList.remove('opacity-50');
             })
             .catch(error => {
-                console.error('Erro ao carregar dados:', error);
+                console.error('Erro:', error);
                 loadingEl.classList.add('hidden');
                 reportCards.classList.remove('opacity-50');
-                mostrarErro('Erro ao carregar relatórios. Tente novamente.');
+                mostrarErro('Erro ao carregar relatórios');
             });
     }
     
@@ -140,7 +141,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Atualiza os gráficos
     function atualizarGraficos(dados) {
-        // Destrói gráficos existentes
         if (lineChart) lineChart.destroy();
         if (pieChart) pieChart.destroy();
         
@@ -209,11 +209,6 @@ document.addEventListener('DOMContentLoaded', function() {
         tableBody.innerHTML = html;
     }
     
-    // Exporta relatório
-    function exportarRelatorio(format, period) {
-        window.location.href = `/relatorios/api/exportar/?format=${format}&period=${period}`;
-    }
-    
     // Formata moeda
     function formatarMoeda(valor) {
         return valor.toLocaleString('pt-BR', {
@@ -232,5 +227,251 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             toast.remove();
         }, 3000);
+    }
+});
+
+// ==============================================
+// FUNÇÕES GLOBAIS DO MODAL DE EXPORTAÇÃO
+// ==============================================
+
+// Abre o modal de exportação
+function openExportModal(format = 'excel', period = 'month') {
+    const modal = document.getElementById('export-modal');
+    if (!modal) return;
+    
+    // Reseta mensagens
+    document.getElementById('success-message').classList.remove('show');
+    document.getElementById('error-message').classList.remove('show');
+    document.getElementById('progress-bar').classList.remove('active');
+    
+    // Seleciona o formato
+    window.selectedFormat = format;
+    window.selectedPeriod = period;
+    
+    // Atualiza UI dos formatos
+    document.querySelectorAll('.export-option-card').forEach(card => {
+        if (card.dataset.format === format) {
+            card.classList.add('selected');
+        } else {
+            card.classList.remove('selected');
+        }
+    });
+    
+    // Atualiza UI dos períodos
+    document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Marca o botão de período correto
+    const periodBtn = Array.from(document.querySelectorAll('.period-btn')).find(
+        btn => btn.getAttribute('onclick')?.includes(period)
+    );
+    if (periodBtn) {
+        periodBtn.classList.add('active');
+    }
+    
+    modal.classList.add('active');
+}
+
+// Fecha o modal de exportação
+function closeExportModal() {
+    const modal = document.getElementById('export-modal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
+// Seleciona formato
+function selectFormat(format) {
+    window.selectedFormat = format;
+    document.querySelectorAll('.export-option-card').forEach(card => {
+        if (card.dataset.format === format) {
+            card.classList.add('selected');
+        } else {
+            card.classList.remove('selected');
+        }
+    });
+}
+
+// Seleciona período
+function selectPeriod(period, event) {
+    window.selectedPeriod = period;
+    document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+}
+
+// Confirma exportação
+function confirmExport() {
+    const progressBar = document.getElementById('progress-bar');
+    const progressFill = document.getElementById('progress-fill');
+    const successMsg = document.getElementById('success-message');
+    const errorMsg = document.getElementById('error-message');
+    
+    // Reseta mensagens
+    successMsg.classList.remove('show');
+    errorMsg.classList.remove('show');
+    
+    // Mostra barra de progresso
+    progressBar.classList.add('active');
+    progressFill.style.width = '0%';
+    
+    // URL de exportação
+    const url =  `${window.location.origin}/relatorios/api/exportar/?format=${window.selectedFormat}&period=${window.selectedPeriod}`;
+    console.log('Exportando:', url);
+    
+    // Pega o token CSRF do cookie
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    const csrftoken = getCookie('csrftoken');
+    
+    // Faz a requisição fetch para obter o arquivo
+    fetch(url, {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrftoken
+        }
+    })
+    .then(async response => {
+        console.log('Status da resposta:', response.status);
+        console.log('Headers:', response.headers);
+        
+        if (response.status === 403) {
+            throw new Error('Erro de autenticação. Faça login novamente.');
+        }
+        
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error(`Erro ${response.status}: ${text}`);
+        }
+        
+        const contentType = response.headers.get('content-type');
+        console.log('Content-Type:', contentType);
+        
+        // Se for JSON, provavelmente é erro
+        if (contentType && contentType.includes('application/json')) {
+            const data = await response.json();
+            throw new Error(data.error || 'Erro na exportação');
+        }
+        
+        // Obtém o blob do arquivo
+        const blob = await response.blob();
+        console.log('Blob recebido:', blob.type, blob.size, 'bytes');
+        
+        if (blob.size === 0) {
+            throw new Error('Arquivo vazio recebido');
+        }
+        
+        // Determina o nome do arquivo
+        const dataAtual = new Date().toISOString().slice(0,10);
+        let nomeArquivo = `relatorio_vendas_${dataAtual}`;
+        
+        if (window.selectedFormat === 'excel') {
+            nomeArquivo += '.xlsx';
+        } else if (window.selectedFormat === 'csv') {
+            nomeArquivo += '.csv';
+        } else if (window.selectedFormat === 'pdf') {
+            nomeArquivo += '.pdf';
+        }
+        
+        // Cria URL do blob e faz download
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = nomeArquivo;
+        document.body.appendChild(link);
+        link.click();
+        
+        // Limpa
+        setTimeout(() => {
+            window.URL.revokeObjectURL(downloadUrl);
+            link.remove();
+        }, 100);
+        
+        // Progresso 100%
+        progressFill.style.width = '100%';
+        
+        // Mostra mensagem de sucesso
+        setTimeout(() => {
+            progressBar.classList.remove('active');
+            successMsg.classList.add('show');
+            
+            // Fecha o modal após 2 segundos
+            setTimeout(() => {
+                closeExportModal();
+            }, 2000);
+        }, 500);
+    })
+    .catch(error => {
+        console.error('Erro no download:', error);
+        
+        // Para a animação
+        progressBar.classList.remove('active');
+        
+        // Mostra mensagem de erro específica
+        errorMsg.textContent = `❌ ${error.message}`;
+        errorMsg.classList.add('show');
+        
+        // Esconde a mensagem após 5 segundos
+        setTimeout(() => {
+            errorMsg.classList.remove('show');
+        }, 5000);
+    });
+}
+
+function exportarFallback(format, period) {
+    const url = `/relatorios/api/exportar/?format=${format}&period=${period}`;
+    console.log('Fallback export:', url);
+    window.location.href = url;
+}
+
+// Modifique o handler do dropdown para oferecer as duas opções
+document.querySelectorAll('.export-option').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const format = this.dataset.format;
+        const period = periodSelect.value;
+        
+        // Pergunta ao usuário qual método usar
+        if (confirm('Usar método de download alternativo?')) {
+            exportarFallback(format, period);
+        } else {
+            openExportModal(format, period);
+        }
+        exportDropdown.classList.add('hidden');
+    });
+});
+
+// Fecha modal com ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeExportModal();
+    }
+});
+
+// Fecha modal clicando fora
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('export-modal');
+    const exportCard = document.querySelector('.export-card');
+    
+    if (modal && modal.classList.contains('active') && 
+        exportCard && !exportCard.contains(e.target)) {
+        closeExportModal();
     }
 });

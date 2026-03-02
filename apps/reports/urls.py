@@ -1,6 +1,7 @@
-# apps/reports/urls.py
 from django.urls import path
 from . import views
+from .views import ExportReportView
+from .views import exportar_direto
 
 app_name = 'reports'
 

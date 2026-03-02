@@ -1,4 +1,3 @@
-# apps/reports/views.py
 from django.shortcuts import render
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -7,6 +6,7 @@ from django.utils import timezone
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
 from .services import ReportService
 from .models import SavedReport
 from .serializers import SavedReportSerializer
@@ -19,9 +19,10 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
-from rest_framework import status
 import traceback
-import logging
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.views import View
 
 class ReportsView(LoginRequiredMixin, TemplateView):
     """View principal da página de relatórios"""
@@ -40,101 +41,72 @@ class ReportsAPIView(APIView):
         try:
             period = request.GET.get('period', 'month')
             
-            print("="*50)
-            print("🔍 DEBUG REPORTS API")
-            print(f"Usuário: {request.user} (ID: {request.user.id})")
-            print(f"Autenticado: {request.user.is_authenticated}")
-            print(f"Período: {period}")
-            print(f"Method: {request.method}")
-            print(f"Headers: {dict(request.headers)}")
-            
-            # Teste simples primeiro
-            from sales.models import Sale
-            total_vendas = Sale.objects.filter(status='Done').count()
-            print(f"Total vendas Done no banco: {total_vendas}")
-            
-            if total_vendas == 0:
-                print("⚠️ ATENÇÃO: Nenhuma venda com status 'Done' encontrada!")
-                
-                # Listar todos os status existentes
-                status_list = Sale.objects.values_list('status', flat=True).distinct()
-                print(f"Status existentes no banco: {list(status_list)}")
-                
-                # Mostrar exemplo de venda
-                venda_exemplo = Sale.objects.first()
-                if venda_exemplo:
-                    print(f"Exemplo de venda - ID: {venda_exemplo.id}, Status: '{venda_exemplo.status}'")
-            
-            # Busca dados dos relatórios
-            print("\n📊 Buscando vendas por marca...")
-            vendas_por_marca = ReportService.get_vendas_por_marca(period)
-            print(f"Resultado: {vendas_por_marca}")
-            
-            print("\n👥 Buscando performance vendedores...")
-            performance_vendedores = ReportService.get_performance_vendedores(period)
-            print(f"Resultado: {performance_vendedores}")
-            
-            print("\n📈 Buscando métricas gerais...")
-            metricas_gerais = ReportService.get_metricas_gerais(period)
-            print(f"Resultado: {metricas_gerais}")
-            
-            print("✅ Debug concluído, retornando resposta")
-            print("="*50)
-            
             return Response({
-                'vendas_por_marca': vendas_por_marca,
-                'performance_vendedores': performance_vendedores,
-                'metricas_gerais': metricas_gerais,
+                'vendas_por_marca': ReportService.get_vendas_por_marca(period),
+                'performance_vendedores': ReportService.get_performance_vendedores(period),
+                'metricas_gerais': ReportService.get_metricas_gerais(period),
                 'relatorio_detalhado': ReportService.get_relatorio_detalhado(period),
                 'dados_graficos': ReportService.get_dados_graficos(period),
             })
             
         except Exception as e:
-            print("❌ ERRO NA API:")
-            print(f"Tipo: {type(e).__name__}")
-            print(f"Mensagem: {str(e)}")
-            print("Traceback:")
+            print(f"❌ ERRO: {str(e)}")
             traceback.print_exc()
-            
             return Response(
-                {'error': str(e), 'type': type(e).__name__},
+                {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-class ExportReportView(APIView):
-    """Exportar relatório em diferentes formatos"""
-    permission_classes = [IsAuthenticated]
+class ExportReportView(LoginRequiredMixin, View):
+    """Exportar relatório usando View do Django em vez de APIView"""
     
     def get(self, request):
+        print("\n" + "="*50)
+        print("🎯 ExportReportView.get() EXECUTADO!")
+        print(f"Path: {request.path}")
+        print(f"User: {request.user}")
+        print(f"Autenticado: {request.user.is_authenticated}")
+        print(f"GET params: {dict(request.GET)}")
+        print("="*50 + "\n")
+        
         format = request.GET.get('format', 'excel')
         period = request.GET.get('period', 'month')
         
-        if format == 'excel':
-            return self.export_excel(period)
-        elif format == 'csv':
-            return self.export_csv(period)
-        elif format == 'pdf':
-            return self.export_pdf(period)
-        else:
-            return Response({'error': 'Formato não suportado'}, status=400)
+        try:
+            if format == 'excel':
+                return self.export_excel(period)
+            elif format == 'csv':
+                return self.export_csv(period)
+            elif format == 'pdf':
+                return self.export_pdf(period)
+            else:
+                return HttpResponse('Formato não suportado', status=400)
+        except Exception as e:
+            print(f"❌ Erro: {e}")
+            import traceback
+            traceback.print_exc()
+            return HttpResponse(f'Erro: {e}', status=500)
     
     def export_excel(self, period):
-        """Exporta relatório para Excel"""
-        # Busca dados
+        # Seu código existente de export_excel
+        from .services import ReportService
+        from django.utils import timezone
+        import openpyxl
+        from openpyxl.styles import Font, Alignment, PatternFill
+        from io import BytesIO
+        
         dados = ReportService.get_relatorio_detalhado(period)
         metricas = ReportService.get_metricas_gerais(period)
         
-        # Cria workbook
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Relatório de Vendas"
         
         # Título
         ws.merge_cells('A1:E1')
-        title = ws['A1']
-        title.value = f"Relatório de Vendas - {timezone.now().strftime('%d/%m/%Y')}"
-        title.font = Font(size=14, bold=True)
-        title.alignment = Alignment(horizontal='center')
+        ws['A1'] = f"Relatório de Vendas - {timezone.now().strftime('%d/%m/%Y')}"
+        ws['A1'].font = Font(size=14, bold=True)
+        ws['A1'].alignment = Alignment(horizontal='center')
         
         # Métricas
         ws['A3'] = "Métricas Gerais"
@@ -151,7 +123,7 @@ class ExportReportView(APIView):
             ws[f'A{4+i}'] = label
             ws[f'B{4+i}'] = value
         
-        # Cabeçalho da tabela
+        # Cabeçalho
         headers = ['Período', 'Vendas', 'Receita', 'Comissões', 'Crescimento']
         for col, header in enumerate(headers, 1):
             cell = ws.cell(row=7, column=col)
@@ -167,21 +139,13 @@ class ExportReportView(APIView):
             ws.cell(row=row, column=3).value = item['receita']
             ws.cell(row=row, column=4).value = item['comissoes']
             ws.cell(row=row, column=5).value = f"{item['crescimento']}%"
-            
-            # Formatação de moeda
             ws.cell(row=row, column=3).number_format = 'R$ #,##0.00'
             ws.cell(row=row, column=4).number_format = 'R$ #,##0.00'
         
-        # Ajusta largura das colunas
-        for col in range(1, 6):
-            ws.column_dimensions[chr(64 + col)].width = 20
-        
-        # Salva em memória
         output = BytesIO()
         wb.save(output)
         output.seek(0)
         
-        # Retorna arquivo
         response = HttpResponse(
             output.read(),
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -190,7 +154,11 @@ class ExportReportView(APIView):
         return response
     
     def export_csv(self, period):
-        """Exporta relatório para CSV"""
+        # Seu código existente de export_csv
+        from .services import ReportService
+        import csv
+        from django.utils import timezone
+        
         dados = ReportService.get_relatorio_detalhado(period)
         
         response = HttpResponse(content_type='text/csv')
@@ -211,7 +179,16 @@ class ExportReportView(APIView):
         return response
     
     def export_pdf(self, period):
-        """Exporta relatório para PDF"""
+        # Seu código existente de export_pdf
+        from .services import ReportService
+        from reportlab.pdfgen import canvas
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib import colors
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+        from reportlab.lib.styles import getSampleStyleSheet
+        from io import BytesIO
+        from django.utils import timezone
+        
         dados = ReportService.get_relatorio_detalhado(period)
         metricas = ReportService.get_metricas_gerais(period)
         
@@ -220,14 +197,10 @@ class ExportReportView(APIView):
         elements = []
         styles = getSampleStyleSheet()
         
-        # Título
         title = Paragraph(f"Relatório de Vendas - {timezone.now().strftime('%d/%m/%Y')}", styles['Title'])
         elements.append(title)
-        
-        # Espaço
         elements.append(Paragraph("<br/>", styles['Normal']))
         
-        # Métricas
         elements.append(Paragraph("Métricas Gerais", styles['Heading2']))
         metrics_data = [
             ['Ticket Médio:', f"R$ {metricas['ticket_medio']:,.2f}"],
@@ -241,13 +214,10 @@ class ExportReportView(APIView):
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ]))
         elements.append(metrics_table)
-        
         elements.append(Paragraph("<br/><br/>", styles['Normal']))
         
-        # Tabela de dados
         elements.append(Paragraph("Vendas por Período", styles['Heading2']))
         
         table_data = [['Período', 'Vendas', 'Receita', 'Comissões', 'Crescimento']]
@@ -266,9 +236,6 @@ class ExportReportView(APIView):
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
             ('GRID', (0, 0), (-1, -1), 1, colors.black)
         ]))
         elements.append(table)
@@ -298,3 +265,26 @@ class SavedReportsView(APIView):
             serializer.save()
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
+    
+@csrf_exempt
+def exportar_direto(request):
+    """View direta sem APIView para teste"""
+    print("\n" + "="*50)
+    print("🚨 VIEW DIRETA FOI CHAMADA!")
+    print(f"Path: {request.path}")
+    print(f"Method: {request.method}")
+    print(f"User: {request.user}")
+    print(f"Autenticado: {request.user.is_authenticated}")
+    print(f"GET: {dict(request.GET)}")
+    print("="*50 + "\n")
+    
+    format = request.GET.get('format', 'excel')
+    period = request.GET.get('period', 'month')
+    
+    # Simula um arquivo para teste
+    response = HttpResponse(
+        f"Teste de exportação - Formato: {format}, Período: {period}\nData: {timezone.now()}",
+        content_type='text/plain'
+    )
+    response['Content-Disposition'] = f'attachment; filename="teste_{format}.txt"'
+    return response
