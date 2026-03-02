@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Veículos - NeonDrive{% endblock %}
+
+{% block content %}
+<div class="min-h-full w-full">
+    <div class="flex h-full">
+        
+        <div id="sidebar-overlay" class="sidebar-overlay hidden" onclick="toggleSidebar()"></div>
+        
+        <main class="flex-1 lg:ml-0 overflow-auto">
+            
+            <div class="p-4 md:p-8 space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <h3 class="text-lg font-semibold text-white">Estoque de Veículos</h3>
+                    <a href="{% url 'vehicles:create' %}" class="gradient-btn px-6 py-3 rounded-xl text-white font-medium flex items-center gap-2 transition-transform hover:scale-105">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg> Novo Veículo
+                    </a>
+                </div>
+                
+                <div class="glass-card neon-border p-4">
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <div class="flex-1 relative">
+                            <svg class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            <input type="text" 
+                                   id="search-input"
+                                   placeholder="Buscar veículo (marca, modelo, placa, cor)..." 
+                                   class="input-field pl-12"
+                                   autocomplete="off">
+                        </div>
+                        <select class="input-field md:w-48" id="status-filter">
+                            <option value="">Todos os Status</option>
+                            <option value="available">Disponíveis</option>
+                            <option value="reserved">Reservados</option>
+                            <option value="sold">Vendidos</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="vehicles-grid">
+                    {% include 'includes/vehicle_cards.html' with vehicles=vehicles %}
+                </div>
+                
+                <!-- Paginação -->
+                {% if is_paginated %}
+                <div class="flex justify-center gap-2 mt-4">
+                    {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}" class="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors">
+                        Anterior
+                    </a>
+                    {% endif %}
+                    
+                    <span class="px-4 py-2 bg-cyan-600 text-white rounded-lg">
+                        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                    </span>
+                    
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}" class="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors">
+                        Próxima
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <div id="feedback-success" class="toast-feedback hidden">
+                    <div class="flex items-center gap-3">
+                        <div class="icon-circle bg-green-500/20 text-green-400">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                        </div>
+                        <div>
+                            <p class="font-medium text-green-400">Operação realizada com sucesso!</p>
+                            <p class="text-sm text-slate-400" id="feedback-message">O veículo foi salvo no sistema.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Modal de detalhes do veículo -->
+<div id="vehicleModal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+    <div class="bg-slate-800 rounded-xl max-w-2xl w-full mx-4">
+        <div class="p-6 border-b border-slate-700 flex justify-between items-center">
+            <h3 class="text-xl font-bold text-white" id="modalTitle">Detalhes do Veículo</h3>
+            <button onclick="closeVehicleModal()" class="text-slate-400 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div class="p-6" id="modalContent">
+            <!-- Conteúdo será preenchido via JavaScript -->
+        </div>
+        <div class="p-6 border-t border-slate-700 flex justify-end gap-4">
+            <button onclick="closeVehicleModal()" class="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600">Fechar</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let searchTimeout = null;
+
+// Função para buscar veículos em tempo real
+function searchVehicles() {
+    const searchTerm = document.getElementById('search-input').value;
+    const statusFilter = document.getElementById('status-filter').value;
+    
+    fetch(`{% url 'vehicles:search_json' %}?search=${encodeURIComponent(searchTerm)}`)
+        .then(response => response.json())
+        .then(data => {
+            const vehiclesGrid = document.getElementById('vehicles-grid');
+            
+            // Filtra por status se necessário
+            let filteredVehicles = data.vehicles;
+            if (statusFilter) {
+                filteredVehicles = data.vehicles.filter(v => v.status === statusFilter);
+            }
+            
+            if (filteredVehicles.length === 0) {
+                vehiclesGrid.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <p class="text-slate-400 text-lg">Nenhum veículo encontrado.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Renderiza os cards
+            let html = '';
+            filteredVehicles.forEach(vehicle => {
+                const statusClass = {
+                    'available': 'badge-success',
+                    'reserved': 'badge-warning',
+                    'sold': 'badge-error'
+                }[vehicle.status] || 'badge-info';
+                
+                html += `
+                    <div class="vehicle-card neon-border group" data-vehicle-id="${vehicle.id}">
+                        <div class="vehicle-img-placeholder relative">
+                            ${vehicle.image_url ? 
+                                `<img src="${vehicle.image_url}" alt="${vehicle.mark} ${vehicle.model}" class="w-full h-48 object-cover rounded-t-xl">` :
+                                `<div class="w-full h-48 bg-slate-700/50 flex items-center justify-center">
+                                    <svg class="w-20 h-20 text-slate-600 group-hover:text-cyan-500/50 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                    </svg>
+                                </div>`
+                            }
+                        </div>
+                        <div class="p-6">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-bold text-white">${vehicle.mark} ${vehicle.model}</h4>
+                                <span class="badge ${statusClass}">${vehicle.status_display}</span>
+                            </div>
+                            <p class="text-slate-400 text-sm mb-4">${vehicle.year} • ${vehicle.color}</p>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xl font-bold text-cyan-400">R$ ${vehicle.value}</span>
+                                <div class="flex gap-2">
+                                    <button onclick="viewVehicle(${vehicle.id})" 
+                                            class="action-btn-circle" 
+                                            title="Detalhes do Veículo"
+                                            style="background-color: #3b82f6;">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                    </button>
+                                    <a href="/veiculos/${vehicle.id}/editar/" 
+                                       class="action-btn-circle" 
+                                       title="Editar Veículo">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                    </a>
+                                    <a href="/veiculos/${vehicle.id}/deletar/" 
+                                       class="action-btn-circle" 
+                                       title="Excluir Veículo"
+                                       style="background-color: #ef4444;"
+                                       onclick="return confirm('Tem certeza que deseja excluir este veículo?')">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            vehiclesGrid.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Erro na busca:', error);
+        });
+}
+
+// Debounce para evitar muitas requisições
+document.getElementById('search-input').addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(searchVehicles, 300);
+});
+
+// Filtro por status
+document.getElementById('status-filter').addEventListener('change', function() {
+    searchVehicles();
+});
+
+// Função para abrir modal de detalhes
+function viewVehicle(vehicleId) {
+    fetch(`/veiculos/${vehicleId}/detalhes/`)
+        .then(response => response.json())
+        .then(data => {
+            const modalContent = document.getElementById('modalContent');
+            const statusClass = {
+                'available': 'text-green-400',
+                'reserved': 'text-yellow-400',
+                'sold': 'text-red-400'
+            }[data.status] || 'text-white';
+            
+            modalContent.innerHTML = `
+                <div class="space-y-4">
+                    ${data.image_url ? 
+                        `<div class="flex justify-center mb-4">
+                            <img src="${data.image_url}" alt="${data.mark} ${data.model}" class="max-h-64 rounded-lg">
+                        </div>` : 
+                        ''
+                    }
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-slate-400 text-sm">Marca</p>
+                            <p class="text-white font-medium">${data.mark}</p>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-sm">Modelo</p>
+                            <p class="text-white font-medium">${data.model}</p>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-sm">Ano</p>
+                            <p class="text-white font-medium">${data.year}</p>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-sm">Placa</p>
+                            <p class="text-white font-medium">${data.car_plate}</p>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-sm">Cor</p>
+                            <p class="text-white font-medium">${data.color}</p>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-sm">Valor</p>
+                            <p class="text-cyan-400 font-bold">R$ ${data.value}</p>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-sm">Status</p>
+                            <p class="${statusClass} font-medium">${data.status_display}</p>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-sm">Cadastrado em</p>
+                            <p class="text-white font-medium">${data.created_at}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('vehicleModal').classList.remove('hidden');
+            document.getElementById('vehicleModal').classList.add('flex');
+        })
+        .catch(error => {
+            console.error('Erro ao carregar detalhes:', error);
+            alert('Erro ao carregar detalhes do veículo');
+        });
+}
+
+function closeVehicleModal() {
+    document.getElementById('vehicleModal').classList.add('hidden');
+    document.getElementById('vehicleModal').classList.remove('flex');
+}
+
+// Fecha o modal se clicar fora
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('vehicleModal');
+    if (event.target === modal) {
+        closeVehicleModal();
+    }
+});
+
+// Inicializa quando o DOM estiver pronto
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Vehicles JS inicializado');
+});
+</script>
+
+<style>
+.toast-feedback {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: #1e293b;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    border: 1px solid #334155;
+    z-index: 100;
+    max-width: 350px;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+</style>
+{% endblock %}

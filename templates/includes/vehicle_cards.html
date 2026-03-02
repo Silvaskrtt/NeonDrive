@@ -1,0 +1,60 @@
+{% load static %}
+
+{% for vehicle in vehicles %}
+<div class="vehicle-card neon-border group" data-vehicle-id="{{ vehicle.id }}">
+    <div class="vehicle-img-placeholder relative">
+        {% if vehicle.image %}
+            <img src="{{ vehicle.image.url }}" alt="{{ vehicle.mark }} {{ vehicle.model }}" class="w-full h-48 object-cover rounded-t-xl">
+        {% else %}
+            <div class="w-full h-48 bg-slate-700/50 flex items-center justify-center">
+                <svg class="w-20 h-20 text-slate-600 group-hover:text-cyan-500/50 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+            </div>
+        {% endif %}
+    </div>
+    <div class="p-6">
+        <div class="flex items-center justify-between mb-2">
+            <h4 class="font-bold text-white">{{ vehicle.mark }} {{ vehicle.model }}</h4>
+            <span class="badge {% if vehicle.status == 'available' %}badge-success{% elif vehicle.status == 'reserved' %}badge-warning{% else %}badge-error{% endif %}">
+                {{ vehicle.get_status_display }}
+            </span>
+        </div>
+        <p class="text-slate-400 text-sm mb-4">{{ vehicle.year }} • {{ vehicle.color }}</p>
+        <div class="flex items-center justify-between">
+            <span class="text-xl font-bold text-cyan-400">R$ {{ vehicle.value|floatformat:2 }}</span>
+            <div class="flex gap-2">
+                <button onclick="viewVehicle({{ vehicle.id }})" 
+                        class="action-btn-circle" 
+                        title="Detalhes do Veículo"
+                        style="background-color: #3b82f6;">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                </button>
+                <a href="{% url 'vehicles:update' vehicle.id %}" 
+                   class="action-btn-circle" 
+                   title="Editar Veículo">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                </a>
+                <a href="{% url 'vehicles:delete' vehicle.id %}" 
+                   class="action-btn-circle" 
+                   title="Excluir Veículo"
+                   style="background-color: #ef4444;"
+                   onclick="return confirm('Tem certeza que deseja excluir este veículo?')">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="col-span-full text-center py-12">
+    <p class="text-slate-400 text-lg">Nenhum veículo encontrado.</p>
+</div>
+{% endfor %}
