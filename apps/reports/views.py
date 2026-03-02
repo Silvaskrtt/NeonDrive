@@ -19,6 +19,9 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
+from rest_framework import status
+import traceback
+import logging
 
 class ReportsView(LoginRequiredMixin, TemplateView):
     """View principal da página de relatórios"""
@@ -34,22 +37,69 @@ class ReportsAPIView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        period = request.GET.get('period', 'month')
-        
-        # Busca dados dos relatórios
-        vendas_por_marca = ReportService.get_vendas_por_marca(period)
-        performance_vendedores = ReportService.get_performance_vendedores(period)
-        metricas_gerais = ReportService.get_metricas_gerais(period)
-        relatorio_detalhado = ReportService.get_relatorio_detalhado(period)
-        dados_graficos = ReportService.get_dados_graficos(period)
-        
-        return Response({
-            'vendas_por_marca': vendas_por_marca,
-            'performance_vendedores': performance_vendedores,
-            'metricas_gerais': metricas_gerais,
-            'relatorio_detalhado': relatorio_detalhado,
-            'dados_graficos': dados_graficos,
-        })
+        try:
+            period = request.GET.get('period', 'month')
+            
+            print("="*50)
+            print("🔍 DEBUG REPORTS API")
+            print(f"Usuário: {request.user} (ID: {request.user.id})")
+            print(f"Autenticado: {request.user.is_authenticated}")
+            print(f"Período: {period}")
+            print(f"Method: {request.method}")
+            print(f"Headers: {dict(request.headers)}")
+            
+            # Teste simples primeiro
+            from sales.models import Sale
+            total_vendas = Sale.objects.filter(status='Done').count()
+            print(f"Total vendas Done no banco: {total_vendas}")
+            
+            if total_vendas == 0:
+                print("⚠️ ATENÇÃO: Nenhuma venda com status 'Done' encontrada!")
+                
+                # Listar todos os status existentes
+                status_list = Sale.objects.values_list('status', flat=True).distinct()
+                print(f"Status existentes no banco: {list(status_list)}")
+                
+                # Mostrar exemplo de venda
+                venda_exemplo = Sale.objects.first()
+                if venda_exemplo:
+                    print(f"Exemplo de venda - ID: {venda_exemplo.id}, Status: '{venda_exemplo.status}'")
+            
+            # Busca dados dos relatórios
+            print("\n📊 Buscando vendas por marca...")
+            vendas_por_marca = ReportService.get_vendas_por_marca(period)
+            print(f"Resultado: {vendas_por_marca}")
+            
+            print("\n👥 Buscando performance vendedores...")
+            performance_vendedores = ReportService.get_performance_vendedores(period)
+            print(f"Resultado: {performance_vendedores}")
+            
+            print("\n📈 Buscando métricas gerais...")
+            metricas_gerais = ReportService.get_metricas_gerais(period)
+            print(f"Resultado: {metricas_gerais}")
+            
+            print("✅ Debug concluído, retornando resposta")
+            print("="*50)
+            
+            return Response({
+                'vendas_por_marca': vendas_por_marca,
+                'performance_vendedores': performance_vendedores,
+                'metricas_gerais': metricas_gerais,
+                'relatorio_detalhado': ReportService.get_relatorio_detalhado(period),
+                'dados_graficos': ReportService.get_dados_graficos(period),
+            })
+            
+        except Exception as e:
+            print("❌ ERRO NA API:")
+            print(f"Tipo: {type(e).__name__}")
+            print(f"Mensagem: {str(e)}")
+            print("Traceback:")
+            traceback.print_exc()
+            
+            return Response(
+                {'error': str(e), 'type': type(e).__name__},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class ExportReportView(APIView):
     """Exportar relatório em diferentes formatos"""

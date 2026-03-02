@@ -85,7 +85,7 @@ class ReportService:
                 'nome': nome,
                 'valor': float(venda['valor_total'] or 0),
                 'quantidade': venda['total_vendas'],
-                'ticket_medio': float(venda['ticket_medio'] or 0)
+                'ticket_medio': float(venda.get('ticket_medio', 0) or 0)
             })
         
         return result

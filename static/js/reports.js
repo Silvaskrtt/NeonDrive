@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
         loadingEl.classList.remove('hidden');
         reportCards.classList.add('opacity-50');
         
-        fetch(`/reports/api/dados/?period=${period}`)
+        fetch(`/relatorios/api/dados/?period=${period}`)
             .then(response => response.json())
             .then(data => {
                 // Atualiza cards
@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Exporta relatório
     function exportarRelatorio(format, period) {
-        window.location.href = `/reports/api/exportar/?format=${format}&period=${period}`;
+        window.location.href = `/relatorios/api/exportar/?format=${format}&period=${period}`;
     }
     
     // Formata moeda
