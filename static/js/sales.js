@@ -116,31 +116,6 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-// Formatação de valores monetários em tempo real
-document.addEventListener('DOMContentLoaded', function() {
-    const valueInput = document.querySelector('input[name="value"]');
-    if (valueInput) {
-        valueInput.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value) {
-                value = (parseInt(value) / 100).toFixed(2);
-                value = value.replace('.', ',');
-                value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
-                e.target.value = value;
-            }
-        });
-        
-        // Remove formatação antes de enviar o form
-        const form = valueInput.closest('form');
-        if (form) {
-            form.addEventListener('submit', function() {
-                let value = valueInput.value.replace(/\./g, '').replace(',', '.');
-                valueInput.value = value;
-            });
-        }
-    }
-});
-
 // Confirmação antes de deletar (caso não use a página de confirmação)
 function confirmDelete(saleId) {
     if (confirm('Tem certeza que deseja excluir esta venda?')) {
